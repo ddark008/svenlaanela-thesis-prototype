@@ -51,3 +51,23 @@ Should show the compilation error in the source code view for AClass.java
 
 After making changes, do the above again, cannot do those as single steps,
 Eclipse does not pick up changes to the annotation processor for some reason :(
+
+
+Prototype implementation plan
+=============================
+
+1. Read through Javassist API
+2. Create a list of use-cases that the Javassist API allows to do
+   - add new field
+   - add new method
+   - add before/after advice
+   - etc.
+3. For all the above use-cases, investigate how to provide type-safety
+   for those use-cases working in conjuction with framework classes.
+   (need to access private fields and methods in original class,
+   as well as public, package-private, protected fields and methods
+   in framework classes - generate liberal mirror to extend from during
+   compile-time?)
+4. Create javassist wiring code for invoking methods/accessing fields on
+   overriding class from the original class (and vice versa). Companion class/object?
+5. Add compile-time validation errors for invalid constructs 
