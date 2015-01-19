@@ -21,13 +21,9 @@ Building/running
 
 Run "mvn clean package". This results in a compilation error being reported for proctest:
 
-
-```
 [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:2.4:compile (default-compile) on project proctest: Compilation failure
 [ERROR] /Users/lanza/Projects/java/thesis/thesis-prototype/proctest/src/main/java/ee/lanza/test/AClass.java:[6,7] error: This classname is: AClass
 [ERROR] -> [Help 1]
-```
-
 
 This error is expected (as proof of concept for annotation processor operation), 
 see CBPProcessor.java in procimpl module
