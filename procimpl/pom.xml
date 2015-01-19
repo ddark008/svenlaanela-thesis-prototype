@@ -6,7 +6,7 @@
 		<artifactId>javassist</artifactId>
 		<version>1.0-SNAPSHOT</version>
 	</parent>
-	<artifactId>processor</artifactId>
+	<artifactId>procimpl</artifactId>
 
 	<dependencies>
 		<dependency>
