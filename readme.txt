@@ -35,7 +35,7 @@ Running in IntelliJ
 *needs cleanup*
 Import maven project
 Disable automatic building for project
-Clean/Make project, shows the error in compilation results
+Rebuild project, shows the error in messages
 (Have not been able to get this to show up in source code view for AClass.java)
 
 
@@ -66,8 +66,29 @@ Prototype implementation plan
    for those use-cases working in conjuction with framework classes.
    (need to access private fields and methods in original class,
    as well as public, package-private, protected fields and methods
-   in framework classes - generate liberal mirror to extend from during
-   compile-time?)
-4. Create javassist wiring code for invoking methods/accessing fields on
+   in framework classes)
+4. Implement generating a liberal mirror to extend from during
+   compile-time
+5. Create javassist wiring code for invoking methods/accessing fields on
    overriding class from the original class (and vice versa). Companion class/object?
-5. Add compile-time validation errors for invalid constructs 
+6. Add compile-time validation errors for invalid constructs 
+
+
+
+Use-cases that javassist allows and that annotationassist should be able to emulate:
+
+Adding a method to class and from that:
+* Call existing methods on the class (and non-private methods of superclasses)
+* Call existing methods on other classes (based on visibility rules)
+* Call other added methods on the class
+* Call other added methods on other classes
+* Access existing fields on the class (and non-private fields of superclasses)
+* Access existing fields on other classes (based on visibility rules)
+* Access added fields on the class
+* Access added fields on other classes
+Adding a field to class and from that
+
+Inserting code to the beginning of an existing method
+Inserting code to the end of an existing method
+Modifying a specific method call inside an existing method
+

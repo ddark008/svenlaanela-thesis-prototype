@@ -1,7 +1,7 @@
 package com.zeroturnaround.jrebel.plugins.thymeleaf;
 
 import org.thymeleaf.cache.ICacheManager;
-import org.zeroturnaround.javassist.annotation.Method;
+import org.zeroturnaround.javassist.annotation.Before;
 import org.zeroturnaround.javassist.annotation.Patches;
 
 /**
@@ -10,7 +10,7 @@ import org.zeroturnaround.javassist.annotation.Patches;
 @Patches(org.thymeleaf.TemplateEngine.class)
 public class ADisableTemplateEngineCacheCBP {
 
-  @Method
+  @Before
   public void setCacheManager(ICacheManager manager) {
   }
 

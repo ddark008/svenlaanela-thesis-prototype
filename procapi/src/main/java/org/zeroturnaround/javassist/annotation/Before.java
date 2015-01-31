@@ -8,8 +8,8 @@ import java.lang.annotation.Target;
 /**
  * Created by lanza on 21/06/14.
  */
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.SOURCE)
 @Target(value={ElementType.METHOD})
-public @interface Method {
+public @interface Before {
 
 }

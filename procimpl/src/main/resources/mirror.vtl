@@ -1,0 +1,22 @@
+package $packageName;
+
+public class $className extends $parentClass {
+
+  #foreach($field in $fields)
+    $field.modifiers $field.name = $field.defaultValue;
+  #end  
+  
+  #foreach($method in $methods)
+    $method.modifiers $method.returnType $method.name(
+    #foreach($parameter in $method.parameters) $parameter.type $parameter
+      $parameter.type $parameter.name 
+    #end
+    )
+    {
+      #if ($method.returnType != null)
+        return $method.defaultValue;
+      #end
+    }
+  #end
+
+}
