@@ -15,9 +15,17 @@ import org.zeroturnaround.javassist.annotation.Patches;
 public class AClass extends ClickServlet_Mirror {	
 	
 	private void rebuildConfigService() {
+		if (true)
+			throw new RuntimeException("fubar!");
+//		System.out.println("Rebuilding config service!");
 		ServletContext sc = getServletContext();
 		configService = createConfigService(sc);
 		initConfigService(sc);
+	}
+	
+	@Before
+	public void init() {
+		throw new RuntimeException("fubar2!");
 	}
 
 	/* hmm.. should still do around? */

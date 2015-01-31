@@ -6,6 +6,14 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
   <artifactId>procloader</artifactId>
-  <name></name>
+  <name>procloader</name>
   <description>Module for annotation assist CBP lookup and hooking to Javassist</description>
+  
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>procimpl</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
 </project>

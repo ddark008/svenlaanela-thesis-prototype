@@ -19,5 +19,15 @@
       <version>${project.version}</version>
       <scope>import</scope>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>procloader</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>proctest</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 </project>

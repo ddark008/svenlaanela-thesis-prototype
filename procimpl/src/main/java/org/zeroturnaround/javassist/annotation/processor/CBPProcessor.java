@@ -95,13 +95,13 @@ public class CBPProcessor extends AbstractProcessor {
 			
 			w.println("import javassist.*;");
 			
-			w.println("public abstract class " + original.getSimpleName() + "CBP extends org.zeroturnaround.javarebel.integration.support.JavassistClassBytecodeProcessor {" );
+			w.println("public class " + original.getSimpleName() + "CBP implements " +JavassistClassBytecodeProcessor.class.getName()+ " {" );
 			
 			w.println("  public void process(ClassPool cp, ClassLoader cl, CtClass ctClass) throws Exception {");
 
 			// TODO: we need to create a CBP class to load during runtimez.
 			// add companion object as field
-			w.println("    CtField.make(\"final "+companionClass.toString()+" __companion = new "+companionClass.toString()+"();\" , ctClass);");
+			w.println("    ctClass.addField(CtField.make(\"final "+companionClass.toString()+" __companion = new "+companionClass.toString()+"();\" , ctClass));");
 			
 			Element companionElement = processingEnv.getTypeUtils().asElement(companionClass);
 
@@ -145,7 +145,7 @@ public class CBPProcessor extends AbstractProcessor {
 											addComma = true;
 										}
 										w.println("  });");
-										w.println("  ctClass.getDeclaredMethod(\""+originalMethod.getName()+"\", params).insertBefore(\"{ __companion."+originalMethod.getName()+"($$);\");");
+										w.println("  ctClass.getDeclaredMethod(\""+originalMethod.getName()+"\", params).insertBefore(\"{ __companion."+originalMethod.getName()+"($$); }\");");
 										w.println("}");
 									}
 								}
