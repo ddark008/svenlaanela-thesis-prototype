@@ -1,4 +1,4 @@
-package ee.lanza.test;
+package com.zeroturnaround.jrebel.plugins.click;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
