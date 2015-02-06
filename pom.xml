@@ -60,8 +60,7 @@
         <module>processor-api</module>
         <module>processor-impl</module>
         <module>processor-loader</module>
-        <module>processor-sample</module>
-        <module>processor-test</module>
+        <module>processor-samples</module>
     </modules>
     
       <build>

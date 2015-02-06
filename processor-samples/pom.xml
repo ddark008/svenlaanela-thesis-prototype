@@ -6,6 +6,10 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
   <artifactId>processor-samples</artifactId>
+
+  <modules>
+    <module>processor-test</module>
+  </modules>
   
   <dependencies>
     <dependency>
