@@ -55,7 +55,7 @@ public class JavassistCBPLoader {
 		}
 	}
 	
-	// TODO: lookup mechanism
+	// TODO: dynamic lookup mechanism
 	private JavassistClassBytecodeProcessor[] doLookup(String className) {
 		try {
 			if ("org.apache.click.ClickServlet".equals(className)) {
