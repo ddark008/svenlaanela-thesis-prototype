@@ -36,6 +36,7 @@ public class JavassistCBPLoader {
 				}
 				return ctClass.toBytecode();
 			} catch (NotFoundException e) {
+				e.printStackTrace();
 				throw new IllegalArgumentException("Class " + className + " not found in classloader " + classPool.getClassLoader());
 			} catch (Exception e) {
 				throw e;

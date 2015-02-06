@@ -18,7 +18,9 @@ public class Main {
 			CtClass cc = cp2.get("org.apache.click.ClickServlet");
 			
 			ClickServlet clickServlet = (ClickServlet) cc.toClass().newInstance();
-			clickServlet.init(); 
+			
+			clickServlet.init();
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

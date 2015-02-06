@@ -9,13 +9,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javassist.CannotCompileException;
 import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMethod;
+import javassist.CtNewMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
+import javassist.expr.ConstructorCall;
+import javassist.expr.ExprEditor;
+import javassist.expr.FieldAccess;
+import javassist.expr.MethodCall;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -33,6 +39,7 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
 import org.zeroturnaround.javassist.annotation.Before;
+import org.zeroturnaround.javassist.annotation.OriginalAware;
 import org.zeroturnaround.javassist.annotation.Patches;
 
 /**
@@ -76,6 +83,7 @@ public class CBPProcessor extends AbstractProcessor {
 	}
 	
 	//TODO: Refactor to separate CBP generator class and add unit tests
+	//TODO: Companion class should be transformed to an inner class of the patched class during annotation processing.
 	private void generateCBPClass(TypeMirror originalClass, TypeMirror companionClass) {
 		
 		System.out.println("Generating CBP for class: " + originalClass);
@@ -83,7 +91,21 @@ public class CBPProcessor extends AbstractProcessor {
 		classPool.insertClassPath(new ClassClassPath(this.getClass()));
 		
 		try {
-			CtClass original = classPool.get(originalClass.toString());
+			final CtClass original = classPool.get(originalClass.toString());
+			
+			/**
+			 * TESTING try to write an inner class
+			 */
+			
+			//classPool.get("plah");
+//			CtClass nested = original.makeNestedClass("plah", false);
+			
+			// damn constructors!
+			
+			/**
+			 * TESTING END
+			 */
+
 			CtMethod[] originalMethods = original.getDeclaredMethods();
 			
 
@@ -94,66 +116,133 @@ public class CBPProcessor extends AbstractProcessor {
 			w.println("package " + original.getPackageName() + ";");
 			
 			w.println("import javassist.*;");
+			w.println("import javassist.expr.*;");
 			
 			w.println("public class " + original.getSimpleName() + "CBP implements " +JavassistClassBytecodeProcessor.class.getName()+ " {" );
 			
-			w.println("  public void process(ClassPool cp, ClassLoader cl, CtClass ctClass) throws Exception {");
+			w.println("  public void process(ClassPool cp, ClassLoader cl, final CtClass ctClass) throws Exception {");
 
-			// TODO: we need to create a CBP class to load during runtimez.
 			// add companion object as field
+			
 			w.println("    ctClass.addField(CtField.make(\"final "+companionClass.toString()+" __companion = new "+companionClass.toString()+"();\" , ctClass));");
 			
-			Element companionElement = processingEnv.getTypeUtils().asElement(companionClass);
-
-			for (Element element : companionElement.getEnclosedElements()) {
-				if (element.getKind() == ElementKind.METHOD) {
-					Before before = element.getAnnotation(Before.class);
-					if (before != null) {
-						System.out.println("is before!");
-						ExecutableElement executable = (ExecutableElement) element;
-						for (CtMethod originalMethod : originalMethods) {
-							boolean signatureMatches = false;							
-							if (executable.getSimpleName().toString().equals(originalMethod.getName())) {
-								System.out.println("Name: " + executable.getSimpleName());
-								if (executable.getReturnType().toString().equals(originalMethod.getReturnType().getName())) {
-									System.out.println("Return type: " + executable.getReturnType().toString());
-									
-									List<String> originalParameterTypeNames = new ArrayList<String>();
-									for (CtClass parameterClass : originalMethod.getParameterTypes()) {
-										System.out.println("Javassist type: " + parameterClass.getName());
-										originalParameterTypeNames.add(parameterClass.getName());	
-									}
-									
-									if (originalParameterTypeNames.size() == executable.getParameters().size()) {
-										for (int i = 0; i < executable.getParameters().size(); i++) {
-											System.out.println("ExecutableElement type: " + executable.getParameters().get(i).asType().toString());
-											String companionParameterTypeName = executable.getParameters().get(i).asType().toString();
-											if (!originalParameterTypeNames.get(i).equals(executable.getParameters().get(i).asType().toString())) {
-												break;
-											}
-											if (i == executable.getParameters().size() -1) {
-												signatureMatches = true;
-											}
-										}
-										System.out.println("Signature matches? " + signatureMatches);
-										
-										w.println("{");
-										w.println("  CtClass[] params = cp.get(new String[] {");
-										boolean addComma = false;
-										for (String parameterTypeName : originalParameterTypeNames) {
-											w.println("    "+(addComma ? ", " : " ") +"\""+parameterTypeName+"\"");
-											addComma = true;
-										}
-										w.println("  });");
-										w.println("  ctClass.getDeclaredMethod(\""+originalMethod.getName()+"\", params).insertBefore(\"{ __companion."+originalMethod.getName()+"($$); }\");");
-										w.println("}");
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+			
+			//TODO: convert companion to inner class
+//			w.println("    ctClass.makeNestedClass(\""+companionClass.toString().substring(companionClass.toString().lastIndexOf('.'))+"\", false);");
+			w.println("    CtClass companionClass = cp.get(\""+companionClass.toString()+"\");");
+			w.println("    companionClass.addField(CtField.make(\""+original.getName()+" __original = null;\", companionClass));");
+			w.println("    companionClass.addInterface(cp.get(\""+OriginalAware.class.getName()+"\"));");
+			w.println("    companionClass.addMethod(CtMethod.make(\"public void setOriginal(Object original) { __original = ("+original.getName()+") original; }\", companionClass));");
+			
+			w.println("    for (CtMethod method : companionClass.getDeclaredMethods()) {");
+			w.println("        // override original method");
+			w.println("        try {");
+			w.println("            CtMethod originalMethod = ctClass.getDeclaredMethod(method.getName(), method.getParameterTypes());");
+			w.println("            CtMethod originalCopy = CtNewMethod.copy(originalMethod, method.getName() + \"__original\", ctClass, null);");
+			w.println("            ctClass.addMethod(originalCopy);");
+			w.println("            if (\"void\".equals(originalMethod.getReturnType().getName())) {");
+			w.println("                originalMethod.setBody(\"{ __companion.\"+method.getName()+\"($$);}\");");
+			w.println("            } else {");
+			w.println("                originalMethod.setBody(\"{ return __companion.\"+method.getName()+\"($$);}\");");
+			w.println("            }");
+			w.println("        } catch (NotFoundException ignored) { ignored.printStackTrace();}");
+			w.println("        System.out.println(\"LeMethod:\"+method.getName());");
+			w.println("        method.instrument(new ExprEditor() {");
+			w.println("            public void edit(MethodCall m) throws CannotCompileException {");
+			w.println("                System.out.println(\">Method:\"+m.getMethodName());");
+			w.println("                System.out.println(\">Classname:\"+m.getClassName());");
+			w.println("                System.out.println(\">Signature:\"+m.getSignature());");
+			w.println("                if (m.getClassName().equals(ctClass.getName() + \"_Mirror\")) {");
+			w.println("                    System.out.println(\"PATCHING!\");");
+			w.println("                    String callFromOriginal = \"__original\";");
+			w.println("                    //String callFromOriginal = \"+ctClass.getName()+\".this.\";");
+			w.println("                    try {");
+			w.println("                    if (\"void\".equals(m.getMethod().getReturnType().getName())) {");
+			w.println("                        m.replace(\"{ \"+callFromOriginal+\".\" + m.getMethodName() + \"__original($$); }\");");
+			w.println("                    } else {");
+			w.println("                        m.replace(\"{ $_ = \"+callFromOriginal+\".\" + m.getMethodName() + \"__original($$); }\");");
+			w.println("                    }");
+			w.println("                    } catch (Exception e) { e.printStackTrace();}");
+			w.println("                }");
+			w.println("            }");
+			w.println("            public void edit(FieldAccess f) throws CannotCompileException {");
+			w.println("                System.out.println(\">Field:\"+f.getFieldName());");
+			w.println("                System.out.println(\">Classname:\"+f.getClassName());");
+			w.println("                System.out.println(\">Signature:\"+f.getSignature());");
+			w.println("                if (f.getClassName().equals(ctClass.getName() +\"_Mirror\")) {");
+			w.println("                    f.replace(\"{ $_ = \"+ctClass.getName() + \".this.\" + f.getFieldName() +\"; }\");");
+			w.println("                }");
+			w.println("            }");
+			w.println("        });");
+			w.println("    }");
+			
+			//TODO: temp
+			w.println("    for (CtConstructor method : ctClass.getDeclaredConstructors()) {");
+			w.println("    method.insertAfter(");
+			w.println("    		\"{ \"+");
+			w.println("    		\"    (("+OriginalAware.class.getName()+")__companion).setOriginal(this);\"+");
+			w.println("    		\"}\");");
+			w.println("    }");
+			
+			w.println("companionClass.writeFile();");
+			w.println("ctClass.defrost();");
+			w.println("ctClass.writeFile();");
+			
+			w.println("    companionClass.toClass();"); //TODO: it might be incorrect to call this in the context of the ContextClassLoader of a given thread.
+			
+			
+			
+//			Element companionElement = processingEnv.getTypeUtils().asElement(companionClass);
+//
+//			for (Element element : companionElement.getEnclosedElements()) {
+//				if (element.getKind() == ElementKind.METHOD) {
+//					Before before = element.getAnnotation(Before.class);
+//					if (before != null) {
+//						System.out.println("is before!");
+//						ExecutableElement executable = (ExecutableElement) element;
+//						for (CtMethod originalMethod : originalMethods) {
+//							boolean signatureMatches = false;							
+//							if (executable.getSimpleName().toString().equals(originalMethod.getName())) {
+//								System.out.println("Name: " + executable.getSimpleName());
+//								if (executable.getReturnType().toString().equals(originalMethod.getReturnType().getName())) {
+//									System.out.println("Return type: " + executable.getReturnType().toString());
+//									
+//									List<String> originalParameterTypeNames = new ArrayList<String>();
+//									for (CtClass parameterClass : originalMethod.getParameterTypes()) {
+//										System.out.println("Javassist type: " + parameterClass.getName());
+//										originalParameterTypeNames.add(parameterClass.getName());	
+//									}
+//									
+//									if (originalParameterTypeNames.size() == executable.getParameters().size()) {
+//										for (int i = 0; i < executable.getParameters().size(); i++) {
+//											System.out.println("ExecutableElement type: " + executable.getParameters().get(i).asType().toString());
+//											String companionParameterTypeName = executable.getParameters().get(i).asType().toString();
+//											if (!originalParameterTypeNames.get(i).equals(executable.getParameters().get(i).asType().toString())) {
+//												break;
+//											}
+//											if (i == executable.getParameters().size() -1) {
+//												signatureMatches = true;
+//											}
+//										}
+//										System.out.println("Signature matches? " + signatureMatches);
+//										
+//										w.println("{");
+//										w.println("  CtClass[] params = cp.get(new String[] {");
+//										boolean addComma = false;
+//										for (String parameterTypeName : originalParameterTypeNames) {
+//											w.println("    "+(addComma ? ", " : " ") +"\""+parameterTypeName+"\"");
+//											addComma = true;
+//										}
+//										w.println("  });");
+//										w.println("  ctClass.getDeclaredMethod(\""+originalMethod.getName()+"\", params).insertBefore(\"{ __companion."+originalMethod.getName()+"($$); }\");");
+//										w.println("}");
+//									}
+//								}
+//							}
+//						}
+//					}
+//				}
+//			}
 			
 			
 			// TODO!

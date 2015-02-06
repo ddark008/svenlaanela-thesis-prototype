@@ -10,6 +10,7 @@ package ee.lanza.javassist.annotation.processor.sample;
  *
  */
 class Parent {
+	
 	public static String publicStaticParentField;
 	static String packageStaticParentField;
 	protected static String protectedStaticParentField;
@@ -32,6 +33,14 @@ class Parent {
 }
 
 public class TestVisibility extends Parent {
+	
+	public TestVisibility() {
+		System.out.println("TestVisibility");
+	}
+	
+	public static void main(String[] args) {
+		new TestVisibility().privateMethod();
+	}
 	
 	public static String publicStaticField;
 	static String packageStaticField;
@@ -91,12 +100,18 @@ public class TestVisibility extends Parent {
 		packageMethod();
 		protectedMethod();
 		privateMethod();
+		
+		companion.privateMethod();
 	};
 	
 	private Companion companion = new Companion();
 	
 	// AClickServletCBP
 	private class Companion {
+		
+		public Companion() {
+			System.out.println("Companion");
+		}
 		
 		private String barString;
 		
@@ -139,7 +154,7 @@ public class TestVisibility extends Parent {
 			publicMethod();
 			packageMethod();
 			protectedMethod();
-			privateMethod();
+			TestVisibility.this.privateMethod();
 		}
 		
 	}
