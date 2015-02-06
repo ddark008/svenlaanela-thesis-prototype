@@ -5,5 +5,5 @@
     <artifactId>processor-samples</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>processor-test</artifactId>
+  <artifactId>processor-samples-plugin</artifactId>
 </project>

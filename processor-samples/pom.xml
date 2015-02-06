@@ -5,10 +5,15 @@
     <artifactId>processor</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
+
   <artifactId>processor-samples</artifactId>
+  <packaging>pom</packaging>
 
   <modules>
     <module>processor-test</module>
+    <module>processor-samples-jrplugins</module>
+    <module>processor-samples-plugin</module>
+    <module>processor-samples-runner</module>
   </modules>
   
   <dependencies>
@@ -21,16 +26,10 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>processor-impl</artifactId>
       <version>${project.version}</version>
-      <scope>import</scope>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>processor-loader</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>processor-test</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>
