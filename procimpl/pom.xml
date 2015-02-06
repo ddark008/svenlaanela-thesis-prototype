@@ -2,23 +2,23 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>ee.lanza.test</groupId>
-		<artifactId>javassist</artifactId>
+		<groupId>ee.lanza.javassist.annotation</groupId>
+		<artifactId>processor</artifactId>
 		<version>1.0-SNAPSHOT</version>
 	</parent>
-	<artifactId>procimpl</artifactId>
+	<artifactId>processor-impl</artifactId>
 
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>procapi</artifactId>
+			<artifactId>processor-api</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>org.apache.velocity</groupId>
 			<artifactId>velocity</artifactId>
 			<version>1.7</version>
-		</dependency>
+		</dependency> -->
 	</dependencies>
 
 	<build>
