@@ -57,11 +57,11 @@
     </dependencies>
 
     <modules>
-        <module>procapi</module>
-        <module>procimpl</module>
-        <module>procsample</module>
-        <module>proctest</module>
-        <module>procloader</module>
+        <module>processor-api</module>
+        <module>processor-impl</module>
+        <module>processor-loader</module>
+        <module>processor-sample</module>
+        <module>processor-test</module>
     </modules>
     
       <build>
