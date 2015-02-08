@@ -321,7 +321,6 @@ public class CBPProcessor extends AbstractProcessor {
 			
 			CtClass superClass = ctClass.getSuperclass();
 			
-			w.println("@org.zeroturnaround.javassist.annotation.CBP(companion="+companionClass.toString()+".class, original="+originalClass.toString()+".class)");
 			if (superClass == null) {
 				w.println("public class " + mirrorClassName + " {");
 			} else {

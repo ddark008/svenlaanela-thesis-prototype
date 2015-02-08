@@ -5,18 +5,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.click.ClickServlet;
-import org.apache.click.service.ConfigService;
 import org.apache.click.ClickServlet_Mirror;
-import org.zeroturnaround.javassist.annotation.After;
 import org.zeroturnaround.javassist.annotation.Before;
 import org.zeroturnaround.javassist.annotation.Patches;
 
 @Patches(ClickServlet.class)
-public class AClass extends ClickServlet_Mirror {
+public class ClickServletCBP extends ClickServlet_Mirror {
 	
 	private void rebuildConfigService() {
-		if (true)
-			throw new RuntimeException("fubar!");
 		ServletContext sc = getServletContext();
 		configService = createConfigService(sc);
 		initConfigService(sc);
@@ -26,20 +22,20 @@ public class AClass extends ClickServlet_Mirror {
 	public void handleRequest(HttpServletRequest $1, HttpServletResponse $2, boolean $3) {
 		rebuildConfigService();
 		super.handleRequest($1, $2, $3); // -> copy, original calls companion, companion calls copy.
-		init();
 	}
 
-	
 	@Before
 	public void init() {
-		System.out.println("Calling init!");
+		System.out.println("PATCHED BEFORE!");
 		try {
 			super.init();
 		} catch (Exception e) {
+			System.out.println("CAUGHT: ");
 			e.printStackTrace();
 		}
-//		throw new RuntimeException("fubar2!");
-		System.out.println("Finished calling init!");
+		System.out.println("PATCHED AFTER!");
 	}
+	
+	
 	
 }
