@@ -60,6 +60,8 @@ public class JavassistCBPLoader {
 		try {
 			if ("org.apache.click.ClickServlet".equals(className)) {
 				return new JavassistClassBytecodeProcessor[] { (JavassistClassBytecodeProcessor) Class.forName("org.apache.click.ClickServletCBP").newInstance()};
+			} else if ("ee.lanza.javassist.annotation.processor.usecases.MethodUsecases".equals(className)) {
+				return new JavassistClassBytecodeProcessor[] { (JavassistClassBytecodeProcessor) Class.forName("ee.lanza.javassist.annotation.processor.usecases.MethodUsecasesCBP").newInstance()};
 			} else {
 				return new JavassistClassBytecodeProcessor[0];
 			}

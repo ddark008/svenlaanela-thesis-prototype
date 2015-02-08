@@ -5,14 +5,19 @@ import javassist.expr.*;
 
 public class $original.cbpSimpleName implements org.zeroturnaround.javassist.annotation.processor.JavassistClassBytecodeProcessor {
 
+  private static final String COMPANION_FIELD = "__companion";
+  private static final String ORIGINAL_FIELD = "__original";
+  private static final String ORIGINAL_METHOD = "__original";
+  private static final String ORIGINAL_AWARE_CLASS = "org.zeroturnaround.javassist.annotation.OriginalAware";
+	
   public void process(ClassPool cp, ClassLoader cl, final CtClass ctClass) throws Exception {
-    ctClass.addField(CtField.make("final $companion.name __companion = new $companion.name ();" , ctClass));
+    ctClass.addField(CtField.make("final $companion.name "+COMPANION_FIELD+" = new $companion.name ();" , ctClass));
     
     //TODO: convert companion to inner class to access private fields/methods
     CtClass companionClass = cp.get("$companion.name");
-    companionClass.addField(CtField.make("$original.name __original = null;", companionClass));
-    companionClass.addInterface(cp.get("org.zeroturnaround.javassist.annotation.OriginalAware"));
-    companionClass.addMethod(CtMethod.make("public void setOriginal(Object original) { __original = ($original.name) original; }", companionClass));
+    companionClass.addField(CtField.make("private $original.name "+ORIGINAL_FIELD+" = null;", companionClass));
+    companionClass.addInterface(cp.get(ORIGINAL_AWARE_CLASS));
+    companionClass.addMethod(CtMethod.make("public void setOriginal(Object original) { "+ORIGINAL_FIELD+" = ($original.name) original; }", companionClass));
       
     for (CtMethod method : companionClass.getDeclaredMethods()) {
       // create a copy of the original method body for all methods that are overriden in the companion class 
@@ -20,13 +25,14 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
       // the original method body copy if required.
       try {
         CtMethod originalMethod = ctClass.getDeclaredMethod(method.getName(), method.getParameterTypes());
-        CtMethod originalCopy = CtNewMethod.copy(originalMethod, method.getName() + "__original", ctClass, null);
+        CtMethod originalCopy = CtNewMethod.copy(originalMethod, method.getName() + ORIGINAL_METHOD, ctClass, null);
         System.out.println("Created copy for original: "+originalMethod.getName()+"() -> "+originalCopy.getName()+"()");
         ctClass.addMethod(originalCopy);
+        String target = Modifier.isStatic(method.getModifiers()) ? companionClass.getName() : COMPANION_FIELD;
         if ("void".equals(originalMethod.getReturnType().getName())) {
-          originalMethod.setBody("{ __companion."+method.getName()+"($$);}");
+          originalMethod.setBody("{ "+target+"."+method.getName()+"($$);}");
         } else {
-          originalMethod.setBody("{ return __companion."+method.getName()+"($$);}");
+          originalMethod.setBody("{ return "+target+"."+method.getName()+"($$);}");
         }
       } catch (NotFoundException ignored) {} // expected, not all methods of the companion exist in the original
       
@@ -37,25 +43,29 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
           if (m.getClassName().equals(ctClass.getName() + "_Mirror")) {
             System.out.println("Updated method call target for companion: "+m.getClassName()+"."+m.getMethodName()+"() -> "+ctClass.getName()+"."+m.getMethodName()+"__original()");
             try {
+              String target = Modifier.isStatic(m.getMethod().getModifiers()) ? ctClass.getName() : ORIGINAL_FIELD;
               if ("void".equals(m.getMethod().getReturnType().getName())) {
-                m.replace("{ __original." + m.getMethodName() + "__original($$); }");
+                m.replace("{ "+target+"." + m.getMethodName() + ORIGINAL_METHOD+"($$); }");
               } else {
-                m.replace("{ $_ = __original." + m.getMethodName() + "__original($$); }");
+                m.replace("{ $_ = "+target+"." + m.getMethodName() + ORIGINAL_METHOD+"($$); }");
               }
-            } catch (Exception e) { e.printStackTrace();}
+            } catch (NotFoundException e) { e.printStackTrace();}
           }
         }
         public void edit(FieldAccess f) throws CannotCompileException {
           if (f.getClassName().equals(ctClass.getName() +"_Mirror")) {
             System.out.println("Updating field access: "+f.getClassName()+"."+f.getFieldName()+" -> "+ctClass.getName()+"."+f.getFieldName());
-            f.replace("{ $_ = __original." + f.getFieldName() +"; }");
+            try {
+              String target = Modifier.isStatic(f.getField().getModifiers()) ? ctClass.getName() : ORIGINAL_FIELD;
+              f.replace("{ $_ = "+target+"." + f.getFieldName() +"; }");
+            } catch (NotFoundException e) { e.printStackTrace(); }
           }
         }
       });
     }
       
     for (CtConstructor method : ctClass.getDeclaredConstructors()) {
-      method.insertAfter("{ ((org.zeroturnaround.javassist.annotation.OriginalAware)__companion).setOriginal(this); }");
+      method.insertAfter("{ (("+ORIGINAL_AWARE_CLASS+")"+COMPANION_FIELD+").setOriginal(this); }");
     }
       
       // debug
