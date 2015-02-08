@@ -14,6 +14,7 @@
     <module>processor-samples-jrplugins</module>
     <module>processor-samples-plugin</module>
     <module>processor-samples-runner</module>
+    <module>processor-samples-usecases</module>
   </modules>
   
   <dependencies>
