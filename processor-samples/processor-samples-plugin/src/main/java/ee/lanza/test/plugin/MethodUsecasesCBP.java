@@ -15,14 +15,11 @@ public class MethodUsecasesCBP extends MethodUsecases_Mirror {
 		return s + "?";
 	}
 	
-	@Override
 	public String publicMethod(String $1) {
 		System.out.println("Before publicMethod");
 		String s = super.publicMethod($1);
 		System.out.println("After publicMethod");
 		return s + "!";
 	}
-
-	
 	
 }
