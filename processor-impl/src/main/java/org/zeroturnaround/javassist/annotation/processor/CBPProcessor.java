@@ -3,18 +3,17 @@ package org.zeroturnaround.javassist.annotation.processor;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.Set;
 
 import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
+import javassist.CtConstructor;
 import javassist.CtField;
 import javassist.CtMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
-import javassist.expr.ExprEditor;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -33,7 +32,6 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
-import org.zeroturnaround.javassist.annotation.OriginalAware;
 import org.zeroturnaround.javassist.annotation.Patches;
 import org.zeroturnaround.javassist.annotation.processor.model.OriginalClass;
 
@@ -124,84 +122,129 @@ public class CBPProcessor extends AbstractProcessor {
 		System.out.println("Finished generating CBP for class: " + originalClass);
 		
 	}
-
-	//TODO: Refactor to separate mirror generator class and add unit tests
+	
 	private void generateMirrorClass(TypeMirror companionClass, TypeMirror originalClass) {
-		System.out.println("Generating mirror for class:" + originalClass);
 		try {
-			System.out.println("CL: " + this.getClass().getClassLoader());
-			for (URL url : ((URLClassLoader)this.getClass().getClassLoader()).getURLs()) {
-				System.out.println("URL: " + url);
-			}
-
-
 			ClassPool classPool = ClassPool.getDefault();
 			classPool.insertClassPath(new ClassClassPath(this.getClass()));
-
 			CtClass ctClass = classPool.get(originalClass.toString());
-			
+		
 			String mirrorClassQualifiedName = ctClass.getName() + "_Mirror";
-			String mirrorClassName = ctClass.getSimpleName() + "_Mirror";
 			
 			JavaFileObject mirrorClass = processingEnv.getFiler().createSourceFile(mirrorClassQualifiedName, null);
 
 			PrintWriter w = new PrintWriter(new BufferedWriter(mirrorClass.openWriter()));
 			w.println("package " + ctClass.getPackageName() + ";");
 			w.println("");
+			w.print("public ");
 			
-			CtClass superClass = ctClass.getSuperclass();
+			generateMirrorClass(ctClass, w);
 			
-			if (superClass == null) {
-				w.println("public class " + mirrorClassName + " {");
-			} else {
-				w.println("public class " + mirrorClassName + " extends "+superClass.getName()+" {");
-			}
-			
-			
-			// convert all class fields to public for access
-			for (CtField field : ctClass.getDeclaredFields()) {
-				String addStatic = Modifier.isStatic(field.getModifiers()) ? "static " : "";
-				String addFinal = Modifier.isFinal(field.getModifiers()) ? "final " : "";
-				String addSynchronized = Modifier.isSynchronized(field.getModifiers()) ? "synchronized " : "";
-				String addVolatile = Modifier.isVolatile(field.getModifiers()) ? "volatile " : "";
-				String addTransient = Modifier.isTransient(field.getModifiers()) ? "transient " : "";
-				String modifiers = addStatic + addFinal + addSynchronized + addVolatile + addTransient;
-				w.println("public " + modifiers + field.getType().getName() + " " + field.getName() + " = "+ getDefaultValue(field.getType()) +";");
-			}
-			
-			// convert all methods to public non-final for access/override
-			for (CtMethod method : ctClass.getDeclaredMethods()) {
-				String addStatic = Modifier.isStatic(method.getModifiers()) ? "static " : "";
-//				String addFinal = Modifier.isFinal(field.getModifiers()) ? "final " : "";
-				String addSynchronized = Modifier.isSynchronized(method.getModifiers()) ? "synchronized " : "";
-//				String addVolatile = Modifier.isVolatile(method.getModifiers()) ? "volatile " : "";
-//				String addTransient = Modifier.isTransient(method.getModifiers()) ? "transient " : "";
-				String modifiers = addStatic + addSynchronized;
-				w.print("public " + modifiers + method.getReturnType().getName() + " " + method.getName() + "(");
-				for (int i = 0; i < method.getParameterTypes().length; i++) {
-					CtClass parameter = method.getParameterTypes()[i];
-					if (i != 0) w.print(", "); 
-					String parameterName = parameter.getName();
-					if (parameterName.startsWith(ctClass.getName())) { // is inner class TODO: inner class visibility
-						parameterName = parameterName.replace('$', '.');
-					}
-					w.print(parameterName + " $"+(i+1));
-				}
-				w.println(") {");				
-				String defaultValue = getDefaultValue(method.getReturnType());
-				if (defaultValue != null) {
-					w.println("return " + defaultValue + ";");
-				}
-				w.println("}");
-			}
-			w.println("}");
 			w.flush();
 			w.close();
 		} catch (Exception e) {
-			processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.toString());
-//			e.printStackTrace();
+			e.printStackTrace();
+			System.out.println("failure generating class");
 		}
-		System.out.println("Finished generating mirror for class:" + originalClass);
+	}
+
+	//TODO: Refactor to separate mirror generator class and add unit tests
+	private void generateMirrorClass(CtClass ctClass, PrintWriter w) throws Exception {
+		 
+		CtClass superClass = ctClass.getSuperclass();
+		String mirrorClassName = ctClass.getSimpleName() + "_Mirror";
+		if (mirrorClassName.contains("$")) {
+			mirrorClassName = mirrorClassName.substring(mirrorClassName.lastIndexOf('$') +1);
+		}
+		
+		
+		if (superClass == null) {
+			w.println("class " + mirrorClassName + " {");
+		} else {
+			String superClassName = superClass.getName().replace("$", ".");
+			w.println("class " + mirrorClassName + " extends "+superClassName+" {");
+		}
+		
+		for (CtClass nestedClass : ctClass.getDeclaredClasses()) {
+			String innerClassName = nestedClass.getName().substring(ctClass.getName().length() + 1);
+			System.out.println("Nested class: " + innerClassName);
+			try {
+				Integer.parseInt(innerClassName); //anonymous inner class
+			} catch (NumberFormatException e) {
+				generateMirrorClass(nestedClass, w);
+			}
+		}
+		
+		for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
+//			String addStatic = Modifier.isStatic(constructor.getModifiers()) ? "static " : "";
+//			String addFinal = Modifier.isFinal(field.getModifiers()) ? "final " : "";
+//			String addSynchronized = Modifier.isSynchronized(constructor.getModifiers()) ? "synchronized " : "";
+//			String addVolatile = Modifier.isVolatile(method.getModifiers()) ? "volatile " : "";
+//			String addTransient = Modifier.isTransient(method.getModifiers()) ? "transient " : "";
+//			String modifiers = addStatic + addSynchronized;
+			w.print("public " + mirrorClassName+ "(");
+			for (int i = 0; i < constructor.getParameterTypes().length; i++) {
+				CtClass parameter = constructor.getParameterTypes()[i];
+				if (i != 0) w.print(", "); 
+				String parameterName = toMirrorSafeName(ctClass, parameter);
+				w.print(parameterName + " $"+(i+1));
+			}
+			w.println(") {");
+			w.print("  super(");
+			for (int i = 0; i < constructor.getParameterTypes().length; i++) {
+				if (i != 0) w.print(", "); 
+				w.print(" $"+(i+1));
+			}
+			w.println(");");
+			w.println("}");
+		}
+		
+		// convert all class fields to public for access
+		for (CtField field : ctClass.getDeclaredFields()) {
+			String addStatic = Modifier.isStatic(field.getModifiers()) ? "static " : "";
+			String addFinal = Modifier.isFinal(field.getModifiers()) ? "final " : "";
+			String addSynchronized = Modifier.isSynchronized(field.getModifiers()) ? "synchronized " : "";
+			String addVolatile = Modifier.isVolatile(field.getModifiers()) ? "volatile " : "";
+			String addTransient = Modifier.isTransient(field.getModifiers()) ? "transient " : "";
+			String modifiers = addStatic + addFinal + addSynchronized + addVolatile + addTransient;
+			
+			String typeName = toMirrorSafeName(ctClass, field.getType());
+			
+			w.println("public " + modifiers + typeName + " " + field.getName() + " = "+ getDefaultValue(field.getType()) +";");
+		}
+		
+		// convert all methods to public non-final for access/override
+		for (CtMethod method : ctClass.getDeclaredMethods()) {
+			String addStatic = Modifier.isStatic(method.getModifiers()) ? "static " : "";
+//				String addFinal = Modifier.isFinal(field.getModifiers()) ? "final " : "";
+			String addSynchronized = Modifier.isSynchronized(method.getModifiers()) ? "synchronized " : "";
+//				String addVolatile = Modifier.isVolatile(method.getModifiers()) ? "volatile " : "";
+//				String addTransient = Modifier.isTransient(method.getModifiers()) ? "transient " : "";
+			String modifiers = addStatic + addSynchronized;
+			w.print("public " + modifiers + method.getReturnType().getName() + " " + method.getName() + "(");
+			for (int i = 0; i < method.getParameterTypes().length; i++) {
+				CtClass parameter = method.getParameterTypes()[i];
+				if (i != 0) w.print(", "); 
+				String parameterName = toMirrorSafeName(ctClass, parameter);
+				w.print(parameterName + " $"+(i+1));
+			}
+			w.println(") {");				
+			String defaultValue = getDefaultValue(method.getReturnType());
+			if (defaultValue != null) {
+				w.println("return " + defaultValue + ";");
+			}
+			w.println("}");
+		}
+		
+		w.println("}");
+	}
+	
+	private String toMirrorSafeName(CtClass containingClass, CtClass type) throws NotFoundException {
+		if (Arrays.asList(containingClass.getDeclaredClasses()).contains(type)) {
+			return type.getName().substring(type.getName().lastIndexOf('$')+1) + "_Mirror";
+		} else {
+			return type.getName();
+		}
 	}
 	
 	private String getDefaultValue(CtClass clazz) {
