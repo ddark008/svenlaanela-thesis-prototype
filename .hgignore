@@ -1,6 +1,7 @@
 syntax: glob
 .*.swp
 *.log
+.factorypath
 .classpath
 .project
 .settings
@@ -36,6 +37,8 @@ syntax: regexp
 
 syntax: regexp
 ^\.classpath$
+syntax: regexp
+^\.factorypath
 syntax: regexp
 ^\.project$
 
