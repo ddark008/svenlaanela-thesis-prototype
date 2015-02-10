@@ -6,19 +6,28 @@ package ee.lanza.javassist.annotation.processor.usecases;
  */
 public class MethodUsecases {
 	
+	private String privateField = "privateField";
+	private static String privateStaticField = "privateStaticField";
+	public String publicField = "publicField";
+	public static String publicStaticField = "publicStaticField";
+	
 	public static final String publicStaticMethod(String input) {
-		return privateStaticMethod(input);
+		return publicStaticField + reverse(input);
 	}
 	
 	public final String publicMethod(String input) {
-		return privateMethod(input);
+		return publicField + reverse(input);
 	}
 	
 	private final String privateMethod(String input) {
-		return privateStaticMethod(input);
+		return privateField + reverse(input);
 	}
 	
-	private static final String privateStaticMethod(String input) {
+	private final String privateStaticMethod(String input) {
+		return privateStaticField + reverse(input);
+	}
+	
+	private static final String reverse(String input) {
 		if (input == null) {
 			return null;
 		}
