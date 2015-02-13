@@ -18,13 +18,12 @@ public class ClickServletCBP extends ClickServlet_Mirror {
 		initConfigService(sc);
 	}
 
-	@Before
+	@Override
 	public void handleRequest(HttpServletRequest $1, HttpServletResponse $2, boolean $3) {
 		rebuildConfigService();
 		super.handleRequest($1, $2, $3); // -> copy, original calls companion, companion calls copy.
 	}
-
-	@Before
+	
 	public void init() {
 		System.out.println("PATCHED BEFORE!");
 		try {
