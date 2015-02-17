@@ -14,6 +14,7 @@ import javassist.CtField;
 import javassist.CtMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
+import javassist.bytecode.AccessFlag;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -136,7 +137,6 @@ public class CBPProcessor extends AbstractProcessor {
 			PrintWriter w = new PrintWriter(new BufferedWriter(mirrorClass.openWriter()));
 			w.println("package " + ctClass.getPackageName() + ";");
 			w.println("");
-			w.print("public ");
 			
 			generateMirrorClass(ctClass, w);
 			
@@ -157,12 +157,23 @@ public class CBPProcessor extends AbstractProcessor {
 			mirrorClassName = mirrorClassName.substring(mirrorClassName.lastIndexOf('$') +1);
 		}
 		
-		
-		if (superClass == null) {
-			w.println("class " + mirrorClassName + " {");
-		} else {
-			String superClassName = superClass.getName().replace("$", ".");
-			w.println("class " + mirrorClassName + " extends "+superClassName+" {");
+		{
+			int modifiers = ctClass.getModifiers();
+			if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
+				modifiers = Modifier.setPublic(modifiers);
+			}
+			if (Modifier.isInterface(modifiers)) {
+				modifiers = Modifier.clear(modifiers, Modifier.ABSTRACT);
+			}
+			modifiers = Modifier.clear(modifiers, Modifier.FINAL);
+			
+			String addClass = Modifier.isInterface(modifiers) ? " " : " class "; 
+			if (superClass == null || "java.lang.Object".equals(superClass.getName())) {
+				w.println(Modifier.toString(modifiers) + addClass + mirrorClassName + " {");
+			} else {
+				String superClassName = superClass.getName().replace("$", ".");
+				w.println(Modifier.toString(modifiers) + addClass + mirrorClassName + " extends "+superClassName+" {");
+			}
 		}
 		
 		for (CtClass nestedClass : ctClass.getDeclaredClasses()) {
@@ -175,65 +186,82 @@ public class CBPProcessor extends AbstractProcessor {
 			}
 		}
 		
-		for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
-//			String addStatic = Modifier.isStatic(constructor.getModifiers()) ? "static " : "";
-//			String addFinal = Modifier.isFinal(field.getModifiers()) ? "final " : "";
-//			String addSynchronized = Modifier.isSynchronized(constructor.getModifiers()) ? "synchronized " : "";
-//			String addVolatile = Modifier.isVolatile(method.getModifiers()) ? "volatile " : "";
-//			String addTransient = Modifier.isTransient(method.getModifiers()) ? "transient " : "";
-//			String modifiers = addStatic + addSynchronized;
-			w.print("public " + mirrorClassName+ "(");
+		
+		outer: for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
+			
+			String s = "public " + mirrorClassName + "(\n";
+//			w.print("public " + mirrorClassName+ "(");
 			for (int i = 0; i < constructor.getParameterTypes().length; i++) {
+				if ((constructor.getModifiers() & AccessFlag.SYNTHETIC) != 0) {
+					break outer;
+				}
+				int modifiers = constructor.getModifiers();
+				if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
+					modifiers = Modifier.setPublic(modifiers);
+				}
+				
 				CtClass parameter = constructor.getParameterTypes()[i];
-				if (i != 0) w.print(", "); 
+				if (i != 0) s+=", ";
 				String parameterName = toMirrorSafeName(ctClass, parameter);
-				w.print(parameterName + " $"+(i+1));
+				s+= parameterName + " $"+(i+1);
 			}
-			w.println(") {");
-			w.print("  super(");
-			for (int i = 0; i < constructor.getParameterTypes().length; i++) {
-				if (i != 0) w.print(", "); 
-				w.print(" $"+(i+1));
+			s+=") {";
+			
+//			// find eligible super constructor
+			for (CtConstructor superConstructor : superClass.getDeclaredConstructors()) {
+				if (Modifier.isPublic(superConstructor.getModifiers())) {
+					s+="  super(";
+					for (int i = 0; i < superConstructor.getParameterTypes().length; i++) {
+						if (i != 0) s+=", ";
+						s+="null";
+					}
+					s+=");";
+					break;
+				}
 			}
-			w.println(");");
-			w.println("}");
+			
+			s+="}";
+			w.println(s);
 		}
 		
 		// convert all class fields to public for access
 		for (CtField field : ctClass.getDeclaredFields()) {
-			String addStatic = Modifier.isStatic(field.getModifiers()) ? "static " : "";
-			String addFinal = Modifier.isFinal(field.getModifiers()) ? "final " : "";
-			String addSynchronized = Modifier.isSynchronized(field.getModifiers()) ? "synchronized " : "";
-			String addVolatile = Modifier.isVolatile(field.getModifiers()) ? "volatile " : "";
-			String addTransient = Modifier.isTransient(field.getModifiers()) ? "transient " : "";
-			String modifiers = addStatic + addFinal + addSynchronized + addVolatile + addTransient;
+			int modifiers = field.getModifiers();
+			if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
+				modifiers = Modifier.setPublic(modifiers);
+			}
 			
 			String typeName = toMirrorSafeName(ctClass, field.getType());
 			
-			w.println("public " + modifiers + typeName + " " + field.getName() + " = "+ getDefaultValue(field.getType()) +";");
+			w.println(Modifier.toString(modifiers) + " " + typeName + " " + field.getName() + " = "+ getDefaultValue(field.getType()) +";");
 		}
 		
 		// convert all methods to public non-final for access/override
 		for (CtMethod method : ctClass.getDeclaredMethods()) {
-			String addStatic = Modifier.isStatic(method.getModifiers()) ? "static " : "";
-//				String addFinal = Modifier.isFinal(field.getModifiers()) ? "final " : "";
-			String addSynchronized = Modifier.isSynchronized(method.getModifiers()) ? "synchronized " : "";
-//				String addVolatile = Modifier.isVolatile(method.getModifiers()) ? "volatile " : "";
-//				String addTransient = Modifier.isTransient(method.getModifiers()) ? "transient " : "";
-			String modifiers = addStatic + addSynchronized;
-			w.print("public " + modifiers + method.getReturnType().getName() + " " + method.getName() + "(");
+			int modifiers = method.getModifiers();
+			if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
+				modifiers = Modifier.setPublic(modifiers);
+			}
+			modifiers = Modifier.clear(modifiers, Modifier.FINAL);
+
+			w.print(Modifier.toString(modifiers) + " " + method.getReturnType().getName() + " " + method.getName() + "(");
 			for (int i = 0; i < method.getParameterTypes().length; i++) {
 				CtClass parameter = method.getParameterTypes()[i];
-				if (i != 0) w.print(", "); 
+				if (i != 0) w.print(", ");
 				String parameterName = toMirrorSafeName(ctClass, parameter);
 				w.print(parameterName + " $"+(i+1));
 			}
-			w.println(") {");				
-			String defaultValue = getDefaultValue(method.getReturnType());
-			if (defaultValue != null) {
-				w.println("return " + defaultValue + ";");
+			w.print(")");
+			if (Modifier.isAbstract(modifiers)) {
+				w.print(";");
+			} else {
+				w.print("{");
+				String defaultValue = getDefaultValue(method.getReturnType());
+				if (defaultValue != null) {
+					w.println("return " + defaultValue + ";");
+				}
+				w.println("}");
 			}
-			w.println("}");
 		}
 		
 		w.println("}");
