@@ -150,7 +150,7 @@ public class CBPProcessor extends AbstractProcessor {
 
 	//TODO: Refactor to separate mirror generator class and add unit tests
 	private void generateMirrorClass(CtClass ctClass, PrintWriter w) throws Exception {
-		 
+		System.out.println("Generating mirror for class: " + ctClass.getName());
 		CtClass superClass = ctClass.getSuperclass();
 		String mirrorClassName = ctClass.getSimpleName() + "_Mirror";
 		if (mirrorClassName.contains("$")) {
@@ -187,14 +187,16 @@ public class CBPProcessor extends AbstractProcessor {
 		}
 		
 		
-		outer: for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
-			
+		// add constructors, convert to public for access/override
+		for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
+			System.out.println("Adding constructor for " + mirrorClassName + " " + constructor.getModifiers() + " " + Modifier.toString(constructor.getModifiers()));
+			System.out.println("Checking for synthetic");
+			if ((constructor.getModifiers() & AccessFlag.SYNTHETIC) != 0 || constructor.getModifiers() == 0) { //wtf
+				System.out.println("is synthetic");
+				continue;
+			}
 			String s = "public " + mirrorClassName + "(\n";
-//			w.print("public " + mirrorClassName+ "(");
 			for (int i = 0; i < constructor.getParameterTypes().length; i++) {
-				if ((constructor.getModifiers() & AccessFlag.SYNTHETIC) != 0) {
-					break outer;
-				}
 				int modifiers = constructor.getModifiers();
 				if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
 					modifiers = Modifier.setPublic(modifiers);
@@ -207,7 +209,7 @@ public class CBPProcessor extends AbstractProcessor {
 			}
 			s+=") {";
 			
-//			// find eligible super constructor
+			// find eligible super constructor
 			for (CtConstructor superConstructor : superClass.getDeclaredConstructors()) {
 				if (Modifier.isPublic(superConstructor.getModifiers())) {
 					s+="  super(";
@@ -238,13 +240,20 @@ public class CBPProcessor extends AbstractProcessor {
 		
 		// convert all methods to public non-final for access/override
 		for (CtMethod method : ctClass.getDeclaredMethods()) {
+			System.out.println("Adding method for " + mirrorClassName + " " + method.getModifiers() + " " + Modifier.toString(method.getModifiers()));
+			System.out.println("Checking for synthetic");
 			int modifiers = method.getModifiers();
+			if ((method.getModifiers() & AccessFlag.SYNTHETIC) != 0 || method.getName().startsWith("access$")) { //wtf
+				System.out.println("is synthetic");
+				continue;
+			}
 			if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
 				modifiers = Modifier.setPublic(modifiers);
 			}
 			modifiers = Modifier.clear(modifiers, Modifier.FINAL);
 
-			w.print(Modifier.toString(modifiers) + " " + method.getReturnType().getName() + " " + method.getName() + "(");
+			String returnType = toMirrorSafeName(ctClass, method.getReturnType());
+			w.print(Modifier.toString(modifiers) + " " + returnType + " " + method.getName() + "(");
 			for (int i = 0; i < method.getParameterTypes().length; i++) {
 				CtClass parameter = method.getParameterTypes()[i];
 				if (i != 0) w.print(", ");
