@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Set;
 
+import javassist.CannotCompileException;
 import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -15,6 +16,8 @@ import javassist.CtMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.bytecode.AccessFlag;
+import javassist.expr.ExprEditor;
+import javassist.expr.MethodCall;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -33,6 +36,7 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.zeroturnaround.javassist.annotation.Edit;
 import org.zeroturnaround.javassist.annotation.Patches;
 import org.zeroturnaround.javassist.annotation.processor.model.OriginalClass;
 
@@ -53,26 +57,32 @@ public class CBPProcessor extends AbstractProcessor {
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-		if (!roundEnv.processingOver()) {
-			for (Element element : roundEnv.getRootElements()) {
-				if (element.getKind() == ElementKind.CLASS && element.getAnnotation(Patches.class) != null) {
-					processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Patching class: " + element.getSimpleName(), element);
-		
-					Patches annotation = element.getAnnotation(Patches.class);
-					try {
-						Class<?> value = annotation.value();
-					} catch (MirroredTypeException e) {
-						generateMirrorClass(element.asType(), e.getTypeMirror());
-						generateCBPClass(e.getTypeMirror(), element.asType());
+		try {
+			processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, "WTF!");
+			if (!roundEnv.processingOver()) {
+				for (Element element : roundEnv.getRootElements()) {
+					if (element.getKind() == ElementKind.CLASS && element.getAnnotation(Patches.class) != null) {
+						processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Patching class: " + element.getSimpleName(), element);
+			
+						Patches annotation = element.getAnnotation(Patches.class);
+						try {
+							Class<?> value = annotation.value();
+						} catch (MirroredTypeException e) {
+							generateMirrorClass(element, e.getTypeMirror());
+							generateCBPClass(e.getTypeMirror(), element.asType());
+						}
+						
 					}
-					
 				}
+				return true;
+			} else {
+				return false;
 			}
-			return true;
-		} else {
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+			processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, "WTF2!");
 			return false;
 		}
-
 //		return false;
 	}
 	
@@ -109,11 +119,11 @@ public class CBPProcessor extends AbstractProcessor {
 			
 			w.close();
 		} catch (NotFoundException e) {
-			processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.toString());
+//			processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.toString());
 			System.out.println(">> NotFoundException");
 			e.printStackTrace();
 		} catch (IOException e) {
-			processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.toString());
+//			processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.toString());
 			System.out.println(">> IOException");
 			e.printStackTrace();
 		} catch (Throwable e) {
@@ -123,8 +133,9 @@ public class CBPProcessor extends AbstractProcessor {
 		System.out.println("Finished generating CBP for class: " + originalClass);
 		
 	}
-	
-	private void generateMirrorClass(TypeMirror companionClass, TypeMirror originalClass) {
+	private void generateMirrorClass(Element element, TypeMirror originalClass) {
+		
+
 		try {
 			ClassPool classPool = ClassPool.getDefault();
 			classPool.insertClassPath(new ClassClassPath(this.getClass()));
@@ -138,7 +149,7 @@ public class CBPProcessor extends AbstractProcessor {
 			w.println("package " + ctClass.getPackageName() + ";");
 			w.println("");
 			
-			generateMirrorClass(ctClass, w);
+			generateMirrorClass(element, ctClass, w);
 			
 			w.flush();
 			w.close();
@@ -149,7 +160,7 @@ public class CBPProcessor extends AbstractProcessor {
 	}
 
 	//TODO: Refactor to separate mirror generator class and add unit tests
-	private void generateMirrorClass(CtClass ctClass, PrintWriter w) throws Exception {
+	private void generateMirrorClass(Element element, CtClass ctClass, final PrintWriter w) throws Exception {
 		System.out.println("Generating mirror for class: " + ctClass.getName());
 		CtClass superClass = ctClass.getSuperclass();
 		String mirrorClassName = ctClass.getSimpleName() + "_Mirror";
@@ -182,7 +193,7 @@ public class CBPProcessor extends AbstractProcessor {
 			try {
 				Integer.parseInt(innerClassName); //anonymous inner class
 			} catch (NumberFormatException e) {
-				generateMirrorClass(nestedClass, w);
+				generateMirrorClass(element, nestedClass, w);
 			}
 		}
 		
@@ -232,6 +243,7 @@ public class CBPProcessor extends AbstractProcessor {
 			if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
 				modifiers = Modifier.setPublic(modifiers);
 			}
+			modifiers = Modifier.clear(modifiers, Modifier.FINAL);
 			
 			String typeName = toMirrorSafeName(ctClass, field.getType());
 			
@@ -240,40 +252,80 @@ public class CBPProcessor extends AbstractProcessor {
 		
 		// convert all methods to public non-final for access/override
 		for (CtMethod method : ctClass.getDeclaredMethods()) {
-			System.out.println("Adding method for " + mirrorClassName + " " + method.getModifiers() + " " + Modifier.toString(method.getModifiers()));
-			System.out.println("Checking for synthetic");
-			int modifiers = method.getModifiers();
-			if ((method.getModifiers() & AccessFlag.SYNTHETIC) != 0 || method.getName().startsWith("access$")) { //wtf
-				System.out.println("is synthetic");
-				continue;
-			}
-			if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
-				modifiers = Modifier.setPublic(modifiers);
-			}
-			modifiers = Modifier.clear(modifiers, Modifier.FINAL);
-
-			String returnType = toMirrorSafeName(ctClass, method.getReturnType());
-			w.print(Modifier.toString(modifiers) + " " + returnType + " " + method.getName() + "(");
-			for (int i = 0; i < method.getParameterTypes().length; i++) {
-				CtClass parameter = method.getParameterTypes()[i];
-				if (i != 0) w.print(", ");
-				String parameterName = toMirrorSafeName(ctClass, parameter);
-				w.print(parameterName + " $"+(i+1));
-			}
-			w.print(")");
-			if (Modifier.isAbstract(modifiers)) {
-				w.print(";");
-			} else {
-				w.print("{");
-				String defaultValue = getDefaultValue(method.getReturnType());
-				if (defaultValue != null) {
-					w.println("return " + defaultValue + ";");
-				}
-				w.println("}");
-			}
+			addMethod(element, ctClass, w, mirrorClassName, method);
+			
 		}
 		
 		w.println("}");
+	}
+
+	private void addMethod(final Element element, final CtClass ctClass,
+			final PrintWriter w, final String mirrorClassName, final CtMethod method)
+			throws NotFoundException, CannotCompileException {
+		System.out.println("Adding method for " + mirrorClassName + " " + method.getModifiers() + " " + Modifier.toString(method.getModifiers()));
+		System.out.println("Checking for synthetic");
+		int modifiers = method.getModifiers();
+		if ((method.getModifiers() & AccessFlag.SYNTHETIC) != 0 || method.getName().startsWith("access$")) { //wtf
+			System.out.println("is synthetic");
+			return;
+		}
+		if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
+			modifiers = Modifier.setPublic(modifiers);
+		}
+		modifiers = Modifier.clear(modifiers, Modifier.FINAL);
+
+		String returnType = toMirrorSafeName(ctClass, method.getReturnType());
+		w.print(Modifier.toString(modifiers) + " " + returnType + " " + method.getName() + "(");
+		for (int i = 0; i < method.getParameterTypes().length; i++) {
+			CtClass parameter = method.getParameterTypes()[i];
+			if (i != 0) w.print(", ");
+			String parameterName = toMirrorSafeName(ctClass, parameter);
+			w.print(parameterName + " $"+(i+1));
+		}
+		w.print(")");
+		if (Modifier.isAbstract(modifiers)) {
+			w.print(";");
+		} else {
+			w.print("{");
+			String defaultValue = getDefaultValue(method.getReturnType());
+			if (defaultValue != null) {
+				w.println("return " + defaultValue + ";");
+			}
+			w.println("}");
+		}
+		
+		
+		
+		/* private methods */
+		
+		/* Method edit */
+//		for (final Element subElement : element.getEnclosedElements()) {
+//			if (subElement.getKind() == ElementKind.METHOD || subElement.getKind() == ElementKind.CONSTRUCTOR) {
+//				final Edit annotation = subElement.getAnnotation(Edit.class);
+//				if (annotation != null) {
+//					System.out.println("FOUND ANNOTATION!");
+//					method.instrument(new ExprEditor() {
+//						public void edit(MethodCall m) throws CannotCompileException {
+//							try {
+//								Class<?> value = annotation.type();
+//							} catch (MirroredTypeException e) {
+//								TypeMirror annotationTypeMirror = e.getTypeMirror();
+//								System.out.println("ANNOTATION type: " + annotationTypeMirror.toString() + ", METHOD: " + annotation.method());
+//								System.out.println("METHOD type: " + m.getClassName() + ", METHOD: " + m.getMethodName());
+//								if (m.getClassName().equals(annotationTypeMirror.toString()) && m.getMethodName().equals(annotation.method())) {
+//									System.out.println("MATCHES!");
+//									try {
+//										addMethod(subElement, ctClass, w, mirrorClassName, m.getMethod());
+//									} catch (NotFoundException nfe) {
+//										nfe.printStackTrace();
+//									}
+//								}
+//							}
+//						}
+//					});
+//				}
+//			}
+//		}
 	}
 	
 	private String toMirrorSafeName(CtClass containingClass, CtClass type) throws NotFoundException {

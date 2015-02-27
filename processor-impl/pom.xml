@@ -14,11 +14,16 @@
 			<artifactId>processor-api</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<!-- <dependency>
-			<groupId>org.apache.velocity</groupId>
-			<artifactId>velocity</artifactId>
-			<version>1.7</version>
-		</dependency> -->
+		<dependency>
+      <groupId>org.apache.velocity</groupId>
+      <artifactId>velocity</artifactId>
+      <version>1.7</version>
+    </dependency>
+		<dependency>
+			<groupId>org.javassist</groupId>
+			<artifactId>javassist</artifactId>
+			<version>3.18.2-GA</version>
+		</dependency>
 	</dependencies>
 
 	<build>

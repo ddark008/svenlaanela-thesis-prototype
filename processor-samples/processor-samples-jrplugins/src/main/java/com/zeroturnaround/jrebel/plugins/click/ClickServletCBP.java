@@ -35,6 +35,4 @@ public class ClickServletCBP extends ClickServlet_Mirror {
 		System.out.println("PATCHED AFTER!");
 	}
 	
-	
-	
 }

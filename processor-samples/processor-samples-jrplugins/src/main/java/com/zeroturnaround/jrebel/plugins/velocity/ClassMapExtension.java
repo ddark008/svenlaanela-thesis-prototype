@@ -14,7 +14,7 @@ import org.zeroturnaround.javassist.annotation.Patches;
 public class ClassMapExtension extends ClassMap_Mirror implements ClassEventListener {
 
 	//@Override / @Extend
-	private volatile MethodCache_Mirror methodCache;
+//	private volatile MethodCache_Mirror methodCache;
 	
 	public ClassMapExtension(Class $1, Log $2) {
 		super($1, $2);
