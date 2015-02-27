@@ -10,6 +10,10 @@ import javassist.CtClass;
 
 import org.zeroturnaround.javassist.annotation.processor.JavassistClassBytecodeProcessor;
 
+/**
+ * NotThreadSafe
+ *
+ */
 public class TestUtil {
 	
 	private static Map<String, Class<?>> classMap = new HashMap<String, Class<?>>();
@@ -34,6 +38,10 @@ public class TestUtil {
 			}
 		}
 		return classMap.get(className);
+	}
+	
+	public static Object createInstance(String className, JavassistClassBytecodeProcessor processor) throws Exception {
+		return getClass(className, processor).newInstance();
 	}
 
 }

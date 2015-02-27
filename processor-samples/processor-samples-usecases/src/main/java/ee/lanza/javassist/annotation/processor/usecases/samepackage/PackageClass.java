@@ -2,7 +2,7 @@ package ee.lanza.javassist.annotation.processor.usecases.samepackage;
 
 public class PackageClass {
 	
-	private OtherClass otherClass = new OtherClass();
+	protected OtherClass otherClass = new OtherClass();
 	
 	/* static methods */
 	public static final String otherClassPublicStaticMethod(String input) {

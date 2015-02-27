@@ -40,26 +40,26 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
       // to invoke the original 
       method.instrument(new ExprEditor() {
         public void edit(MethodCall m) throws CannotCompileException {
-          if (m.getClassName().equals(ctClass.getName() + "_Mirror")) {
-            System.out.println("Updated method call target for companion: "+m.getClassName()+"."+m.getMethodName()+"() -> "+ctClass.getName()+"."+m.getMethodName()+"__original()");
-            try {
+          try {
+            if (m.getClassName().equals(ctClass.getName() + "_Mirror")) {
+              System.out.println("Updated method call target for companion: "+m.getClassName()+"."+m.getMethodName()+"() -> "+ctClass.getName()+"."+m.getMethodName()+"__original()");
               String target = Modifier.isStatic(m.getMethod().getModifiers()) ? ctClass.getName() : ORIGINAL_FIELD;
               if ("void".equals(m.getMethod().getReturnType().getName())) {
                 m.replace("{ "+target+"." + m.getMethodName() + ORIGINAL_METHOD+"($$); }");
               } else {
                 m.replace("{ $_ = "+target+"." + m.getMethodName() + ORIGINAL_METHOD+"($$); }");
               }
-            } catch (NotFoundException e) { e.printStackTrace();}
-          }
+            }
+          } catch (NotFoundException e) { e.printStackTrace();}
         }
         public void edit(FieldAccess f) throws CannotCompileException {
-          if (f.getClassName().equals(ctClass.getName() +"_Mirror")) {
-            System.out.println("Updating field access: "+f.getClassName()+"."+f.getFieldName()+" -> "+ctClass.getName()+"."+f.getFieldName());
-            try {
+          try {
+        	if (f.getField().getDeclaringClass().getName().equals(ctClass.getName() +"_Mirror")) {
+              System.out.println("Updating field access: "+f.getField().getDeclaringClass().getName()+"."+f.getFieldName()+" -> "+ctClass.getName()+"."+f.getFieldName());
               String target = Modifier.isStatic(f.getField().getModifiers()) ? ctClass.getName() : ORIGINAL_FIELD;
               f.replace("{ $_ = "+target+"." + f.getFieldName() +"; }");
-            } catch (NotFoundException e) { e.printStackTrace(); }
-          }
+        	}
+          } catch (NotFoundException e) { e.printStackTrace(); }
         }
       });
     }
