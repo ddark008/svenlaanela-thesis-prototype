@@ -12,31 +12,21 @@ public class MethodUsecases {
 	public static String publicStaticField = "publicStaticField";
 	
 	public static final String publicStaticMethod(String input) {
-		return publicStaticField + reverse(input);
+		return publicStaticField + Util.reverse(input);
 	}
 	
 	public final String publicMethod(String input) {
-		return publicField + reverse(input);
+		return publicField + Util.reverse(input);
 	}
 	
 	private final String privateMethod(String input) {
-		return privateField + reverse(input);
+		return privateField + Util.reverse(input);
 	}
 	
 	private final String privateStaticMethod(String input) {
-		return privateStaticField + reverse(input);
+		return privateStaticField + Util.reverse(input);
 	}
 	
-	private static final String reverse(String input) {
-		if (input == null) {
-			return null;
-		}
-		
-		String s = "";
-		for (int i = input.length() - 1; i >=0 ; i--) {
-			s += input.charAt(i);
-		}
-		return s;
-	}
+
 
 }

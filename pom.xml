@@ -14,7 +14,17 @@
     <module>processor-impl</module>
     <module>processor-loader</module>
     <module>processor-samples</module>
+    <module>examples</module>
   </modules>
+  
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
     
   <build>
     <plugins>

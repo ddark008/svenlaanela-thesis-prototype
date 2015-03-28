@@ -40,6 +40,10 @@ public class TestUtil {
 		return classMap.get(className);
 	}
 	
+	public static Object createInstance(String className) throws Exception {
+	  return Class.forName(className).newInstance();
+	}
+	
 	public static Object createInstance(String className, JavassistClassBytecodeProcessor processor) throws Exception {
 		return getClass(className, processor).newInstance();
 	}

@@ -1,7 +1,9 @@
 package $original.packageName;
 
+import java.util.*;
 import javassist.*;
 import javassist.expr.*;
+import javassist.bytecode.*;
 
 public class $original.cbpSimpleName implements org.zeroturnaround.javassist.annotation.processor.JavassistClassBytecodeProcessor {
 
@@ -10,7 +12,9 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
   private static final String ORIGINAL_METHOD = "__original";
   private static final String ORIGINAL_AWARE_CLASS = "org.zeroturnaround.javassist.annotation.OriginalAware";
 	
-  public void process(ClassPool cp, ClassLoader cl, final CtClass ctClass) throws Exception {
+  private static final Map<String, String> synthetics = new HashMap<String, String>();
+  
+  public void process(final ClassPool cp, final ClassLoader cl, final CtClass ctClass) throws Exception {
     ctClass.addField(CtField.make("final $companion.name "+COMPANION_FIELD+" = new $companion.name ();" , ctClass));
     
     //TODO: convert companion to inner class to access private fields/methods
@@ -19,13 +23,16 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
     companionClass.addInterface(cp.get(ORIGINAL_AWARE_CLASS));
     companionClass.addMethod(CtMethod.make("public void setOriginal(Object original) { "+ORIGINAL_FIELD+" = ($original.name) original; }", companionClass));
       
-    for (CtMethod method : companionClass.getDeclaredMethods()) {
+    for (final CtMethod method : companionClass.getDeclaredMethods()) {
       // create a copy of the original method body for all methods that are overriden in the companion class 
       // and redirect the original method to call the method defined in the companion class (which will call
       // the original method body copy if required.
+      
+      CtMethod originalMethod = null;
+      CtMethod originalCopy = null;
       try {
-        CtMethod originalMethod = ctClass.getDeclaredMethod(method.getName(), method.getParameterTypes());
-        CtMethod originalCopy = CtNewMethod.copy(originalMethod, method.getName() + ORIGINAL_METHOD, ctClass, null);
+        originalMethod = ctClass.getDeclaredMethod(method.getName(), method.getParameterTypes()); // throws NotFoundException if not a method override!
+        originalCopy = CtNewMethod.copy(originalMethod, method.getName() + ORIGINAL_METHOD, ctClass, null);
         System.out.println("Created copy for original: "+originalMethod.getName()+"() -> "+originalCopy.getName()+"()");
         ctClass.addMethod(originalCopy);
         String target = Modifier.isStatic(method.getModifiers()) ? companionClass.getName() : COMPANION_FIELD;
@@ -35,20 +42,110 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
           originalMethod.setBody("{ return "+target+"."+method.getName()+"($$);}");
         }
       } catch (NotFoundException ignored) {} // expected, not all methods of the companion exist in the original
+      final CtMethod finalOriginalCopy = originalCopy;
       
       // The companion class was compiled against a mirror of the original, overwrite all method and field accesses
-      // to invoke the original 
+      // to invoke the original
+      final List<String> instrumentClassNames = new ArrayList<String>();
       method.instrument(new ExprEditor() {
-        public void edit(MethodCall m) throws CannotCompileException {
+        public void edit(final NewExpr c) throws CannotCompileException {
           try {
-            if (m.getClassName().equals(ctClass.getName() + "_Mirror")) {
-              System.out.println("Updated method call target for companion: "+m.getClassName()+"."+m.getMethodName()+"() -> "+ctClass.getName()+"."+m.getMethodName()+"__original()");
-              String target = Modifier.isStatic(m.getMethod().getModifiers()) ? ctClass.getName() : ORIGINAL_FIELD;
-              if ("void".equals(m.getMethod().getReturnType().getName())) {
-                m.replace("{ "+target+"." + m.getMethodName() + ORIGINAL_METHOD+"($$); }");
-              } else {
-                m.replace("{ $_ = "+target+"." + m.getMethodName() + ORIGINAL_METHOD+"($$); }");
+            String className = c.getClassName();
+            if (Arrays.asList(cp.get(className).getInterfaces()).contains(cp.get(org.zeroturnaround.javassist.annotation.MethodCall.class.getName()))){
+              instrumentClassNames.add(className);
+            }
+          } catch (NotFoundException ignored) { ignored.printStackTrace(); }
+        }
+      });
+      
+      method.instrument(new ExprEditor() {
+        public void edit(final MethodCall m) throws CannotCompileException {
+          try {
+        	System.out.println("isInstrument? " + m.getClassName()+"."+m.getSignature());
+        	if (m.getClassName().equals(ctClass.getName() + "_Mirror") && m.getSignature().contains(org.zeroturnaround.javassist.annotation.MethodCall.class.getName().replace('.', '/'))) {
+        	  
+        	  System.out.println("Instrumenting original method:" + finalOriginalCopy.getSignature());
+        	  LocalVariableAttribute attr = (LocalVariableAttribute) m.getMethod().getMethodInfo().getCodeAttribute().getAttribute(javassist.bytecode.LocalVariableAttribute.tag);
+        	  System.out.println(attr);
+        	  
+        	  for (final String instrumentClassName : instrumentClassNames) {
+                System.out.println("instrumentClass:" +instrumentClassName);
+                CtClass instrumentClass = cp.get(instrumentClassName);
+                for (final CtMethod instrumentMethod : instrumentClass.getDeclaredMethods()) {
+                  final String instrumentName = instrumentMethod.getName();
+                  final CtClass instrumentReturnType = instrumentMethod.getReturnType();
+                  final List<CtClass> instrumentParameterTypes = new ArrayList<CtClass>(Arrays.asList(instrumentMethod.getParameterTypes()));
+                  final CtClass instrumentTargetType = instrumentParameterTypes.remove(0);
+                  
+                  finalOriginalCopy.instrument(new ExprEditor() {
+                    public void edit(MethodCall m2) throws CannotCompileException {
+                      try {
+                        System.out.println("Replace: "+finalOriginalCopy.getSignature()+" " + m2.getClassName() +", " + m2.getMethodName());
+                        if (m2.getClassName().equals(instrumentTargetType.getName()) && m2.getMethodName().equals(instrumentName) && Arrays.equals(m2.getMethod().getParameterTypes(), instrumentParameterTypes.toArray())) {
+                          //TODO: hacky solution, need to save the instance somewhere
+                          //TODO: does not support redirecting method call to a method inside the same class/inside a mirror
+                          m2.replace("$_ = new "+instrumentClassName+"(__companion)."+instrumentName+"($0, $$);"); // TODO: hacky solution, need to save the instance somewhere.
+                        }
+                      } catch (NotFoundException ignored) { ignored.printStackTrace(); }
+                    }
+                  });
+                }
+                
+                
+                
               }
+        	  m.replace("");
+        	  
+        	  //TODO: how the fuck to do validation?
+//        	  finalOriginalCopy.instrument(new ExprEditor() {
+//        	    public void edit(MethodCall m2) throws CannotCompileException {
+//        	      if (m2.getClassName().equals(m.get))
+//        	    }
+//        	  });
+        	  
+        	  
+        	  
+        	} else if (m.getClassName().equals(ctClass.getName() + "_Mirror")) {
+              System.out.println("Updated method call target for companion: "+m.getClassName()+"."+m.getMethodName()+"() -> "+ctClass.getName()+"."+m.getMethodName()+"__original()");
+              
+              CtMethod originalMethod = ctClass.getMethod(m.getMethod().getName(), m.getMethod().getSignature());
+              System.out.println("Original method: " +m.getMethod().getName()+", sig: " + m.getMethod().getSignature());
+              System.out.println("Original: "+originalMethod.getName()+", sig:"+ Modifier.toString(originalMethod.getModifiers()));
+              
+              String syntheticMethodName = null;
+              if (Modifier.isPrivate(originalMethod.getModifiers())) { // create synthetic method for accessing private method if one does not exist for that method yet
+            	  System.out.println("creating a synthetic method for: " + originalMethod.getName());
+            	  // check for existence of synthetic method
+            	  
+            	  // create synthetic accessor method
+            	  syntheticMethodName = "access$1000";
+            	  ctClass.addMethod(CtNewMethod.make(
+            			  "static "+originalMethod.getReturnType().getName()+" "+syntheticMethodName+"("+ctClass.getName()+" instance, String input) {"+
+            					  "return instance."+originalMethod.getName()+"__original(input);"+
+            					  "}"
+            					  , ctClass));
+            	  synthetics.put(originalMethod.getSignature(), syntheticMethodName);
+              }
+              String syntheticReference = "";
+              String targetMethodName = m.getMethodName(); 
+              String target = Modifier.isStatic(m.getMethod().getModifiers()) ? ctClass.getName() : ORIGINAL_FIELD;
+              if (syntheticMethodName != null) {
+            	  syntheticReference = ORIGINAL_FIELD;
+            	  targetMethodName = syntheticMethodName;
+            	  target = ctClass.getName();
+            	  if ("void".equals(m.getMethod().getReturnType().getName())) {
+            		  m.replace("{ "+target+"." + syntheticMethodName +"("+syntheticReference+", $$); }");
+            	  } else {
+            		  m.replace("{ $_ = "+target+"." + syntheticMethodName +"("+syntheticReference+", $$); }");
+            	  }  
+              } else {
+	              if ("void".equals(m.getMethod().getReturnType().getName())) {
+	                m.replace("{ "+target+"." + m.getMethodName() + ORIGINAL_METHOD+"($$); }");
+	              } else {
+	                m.replace("{ $_ = "+target+"." + m.getMethodName() + ORIGINAL_METHOD+"($$); }");
+	              }
+              }
+              
             }
           } catch (NotFoundException e) { e.printStackTrace();}
         }

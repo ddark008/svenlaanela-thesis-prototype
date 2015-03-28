@@ -1,5 +1,7 @@
 package ee.lanza.javassist.annotation.processor.usecases.samepackage;
 
+import ee.lanza.javassist.annotation.processor.usecases.Util;
+
 public class OtherClass {
 	
 	public static final String publicStaticField = "publicStaticField";
@@ -16,19 +18,19 @@ public class OtherClass {
 	
 	/* static methods */
 	public static final String publicStaticMethod(String input) {
-		return publicStaticField + reverse(input);
+		return publicStaticField + Util.reverse(input);
 	}
 	
 	protected static final String protectedStaticMethod(String input) {
-		return protectedStaticField + reverse(input);
+		return protectedStaticField + Util.reverse(input);
 	}
 	
 	static final String packageStaticMethod(String input) {
-		return packageStaticField + reverse(input);
+		return packageStaticField + Util.reverse(input);
 	}
 	
 	private static final String privateStaticMethod(String input) {
-		return privateStaticField + reverse(input);
+		return privateStaticField + Util.reverse(input);
 	}
 	
 	/* static accessors */
@@ -53,19 +55,19 @@ public class OtherClass {
 	
 	/* instance methods */
 	public final String publicMethod(String input) {
-		return publicField + reverse(input);
+		return publicField + Util.reverse(input);
 	}
 	
 	protected final String protectedMethod(String input) {
-		return protectedField + reverse(input);
+		return protectedField + Util.reverse(input);
 	}
 	
 	final String packageMethod(String input) {
-		return packageField + reverse(input);
+		return packageField + Util.reverse(input);
 	}
 	
 	private final String privateMethod(String input) {
-		return privateField + reverse(input);
+		return privateField + Util.reverse(input);
 	}
 	
 	/* instance accessors */
@@ -83,20 +85,6 @@ public class OtherClass {
 	
 	public String privateMethodAccessor(String input) {
 		return privateMethod(input);
-	}
-	
-	
-	
-	private static final String reverse(String input) {
-		if (input == null) {
-			return null;
-		}
-		
-		String s = "";
-		for (int i = input.length() - 1; i >=0 ; i--) {
-			s += input.charAt(i);
-		}
-		return s;
 	}
 
 }
