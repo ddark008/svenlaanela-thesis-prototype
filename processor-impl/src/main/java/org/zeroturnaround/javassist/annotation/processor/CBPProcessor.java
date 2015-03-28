@@ -3,19 +3,12 @@ package org.zeroturnaround.javassist.annotation.processor;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.Set;
 
-import javassist.CannotCompileException;
 import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
-import javassist.CtConstructor;
-import javassist.CtField;
-import javassist.CtMethod;
-import javassist.Modifier;
 import javassist.NotFoundException;
-import javassist.bytecode.AccessFlag;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -37,7 +30,6 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
-import org.zeroturnaround.javassist.annotation.MethodCall;
 import org.zeroturnaround.javassist.annotation.Patches;
 import org.zeroturnaround.javassist.annotation.processor.model.OriginalClass;
 

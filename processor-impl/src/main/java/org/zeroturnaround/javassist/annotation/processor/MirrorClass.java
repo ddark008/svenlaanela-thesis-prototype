@@ -51,44 +51,52 @@ public class MirrorClass {
     StringBuilder result = new StringBuilder();
     result.append("package " + originalClass.getPackageName() + ";\n");
     result.append("\n");
-    result.append(generateMirrorClass(originalClass));
+    result.append(generateBodySource(originalClass));
     return result.toString();
   }
 
-  // TODO: Refactor to separate mirror generator class and add unit tests
-  private String generateMirrorClass(CtClass ctClass) throws Exception {
+  private String generateBodySource(CtClass ctClass) throws Exception {
     StringBuilder result = new StringBuilder();
     System.out.println("Generating mirror for class: " + ctClass.getName());
-    CtClass superClass = ctClass.getSuperclass();
+    
     String mirrorClassName = ctClass.getSimpleName() + "_Mirror";
     if (mirrorClassName.contains("$")) {
       mirrorClassName = mirrorClassName.substring(mirrorClassName.lastIndexOf('$') + 1);
     }
 
+    // add class declaration
     {
       int modifiers = ctClass.getModifiers();
       if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
         modifiers = Modifier.setProtected(modifiers);
       }
-      if (Modifier.isInterface(modifiers)) {
+      modifiers = Modifier.clear(modifiers, Modifier.FINAL);
+      if (Modifier.isAbstract(modifiers)) {
         modifiers = Modifier.clear(modifiers, Modifier.ABSTRACT);
       }
-      modifiers = Modifier.clear(modifiers, Modifier.FINAL);
 
-      String addClass = Modifier.isInterface(modifiers) ? " " : " class ";
-      if (superClass == null || "java.lang.Object".equals(superClass.getName())) {
-        result.append(Modifier.toString(modifiers) + addClass + mirrorClassName + " {\n");
-      }
-      else {
+      result.append(Modifier.toString(modifiers) + " class " + mirrorClassName); // public class className
+      CtClass superClass = ctClass.getSuperclass();
+      if (superClass != null && !"java.lang.Object".equals(superClass.getName())) {
         String superClassName = superClass.getName().replace("$", ".");
-        result.append(Modifier.toString(modifiers) + addClass + mirrorClassName + " extends " + superClassName + " {\n");
+        result.append(" extends " + superClassName); // extends parentClassName
       }
+      CtClass[] interfaceClasses = ctClass.getInterfaces();
+      if (interfaceClasses.length > 0) {
+        result.append(" implements ");
+        for (CtClass interfaceClass : interfaceClasses) {
+          result.append(interfaceClass.getName().replace("$", "."));
+        }
+      }
+      
+      result.append(" {\n");
 
       if (!Modifier.isInterface(modifiers)) {
         result.append("  protected final void instrument(" + MethodCall.class.getName() + " call) {}\n");
       }
     }
 
+    // add nested classes
     for (CtClass nestedClass : ctClass.getDeclaredClasses()) {
       String innerClassName = nestedClass.getName().substring(ctClass.getName().length() + 1);
       System.out.println("Nested class: " + innerClassName);
@@ -96,7 +104,7 @@ public class MirrorClass {
         Integer.parseInt(innerClassName); // anonymous inner class
       }
       catch (NumberFormatException e) {
-        String nestedClassSrc = generateMirrorClass(nestedClass);
+        String nestedClassSrc = generateBodySource(nestedClass);
         result.append(nestedClassSrc);
       }
     }
@@ -125,7 +133,7 @@ public class MirrorClass {
       s += ") {";
 
       // find eligible super constructor
-      for (CtConstructor superConstructor : superClass.getDeclaredConstructors()) {
+      for (CtConstructor superConstructor : ctClass.getSuperclass().getDeclaredConstructors()) {
         if (Modifier.isPublic(superConstructor.getModifiers())) {
           s += "  super(";
           for (int i = 0; i < superConstructor.getParameterTypes().length; i++) {
