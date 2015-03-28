@@ -68,7 +68,7 @@ public class MirrorClass {
     {
       int modifiers = ctClass.getModifiers();
       if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
-        modifiers = Modifier.setPublic(modifiers);
+        modifiers = Modifier.setProtected(modifiers);
       }
       if (Modifier.isInterface(modifiers)) {
         modifiers = Modifier.clear(modifiers, Modifier.ABSTRACT);
@@ -176,7 +176,7 @@ public class MirrorClass {
     StringBuilder result = new StringBuilder();
     int modifiers = method.getModifiers();
     if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
-      modifiers = Modifier.setPublic(modifiers);
+      modifiers = Modifier.setProtected(modifiers);
     }
     modifiers = Modifier.clear(modifiers, Modifier.FINAL);
 
