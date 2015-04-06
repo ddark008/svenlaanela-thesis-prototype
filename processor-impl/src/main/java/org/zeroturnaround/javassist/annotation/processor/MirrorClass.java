@@ -68,7 +68,7 @@ public class MirrorClass {
     {
       int modifiers = ctClass.getModifiers();
       if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
-        modifiers = Modifier.setProtected(modifiers);
+        modifiers = Modifier.setPackage(modifiers);
       }
       modifiers = Modifier.clear(modifiers, Modifier.FINAL);
       if (Modifier.isAbstract(modifiers)) {
@@ -134,7 +134,10 @@ public class MirrorClass {
 
       // find eligible super constructor
       for (CtConstructor superConstructor : ctClass.getSuperclass().getDeclaredConstructors()) {
-        if (Modifier.isPublic(superConstructor.getModifiers())) {
+        if (Modifier.isPublic(superConstructor.getModifiers()) 
+            || Modifier.isProtected(superConstructor.getModifiers()) 
+            || Modifier.isPackage(superConstructor.getModifiers()) 
+               && ctClass.getSuperclass().getPackageName().equals(ctClass.getPackageName())) {
           s += "  super(";
           for (int i = 0; i < superConstructor.getParameterTypes().length; i++) {
             if (i != 0)
@@ -154,7 +157,7 @@ public class MirrorClass {
     for (CtField field : ctClass.getDeclaredFields()) {
       int modifiers = field.getModifiers();
       if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
-        modifiers = Modifier.setPublic(modifiers);
+        modifiers = Modifier.setPackage(modifiers);
       }
       modifiers = Modifier.clear(modifiers, Modifier.FINAL);
 
@@ -211,38 +214,6 @@ public class MirrorClass {
       result.append("}");
     }
     return result.toString();
-    
-    /* private methods */
-    
-    /* Method edit */
-//  for (final Element subElement : element.getEnclosedElements()) {
-//      if (subElement.getKind() == ElementKind.METHOD || subElement.getKind() == ElementKind.CONSTRUCTOR) {
-//          final Edit annotation = subElement.getAnnotation(Edit.class);
-//          if (annotation != null) {
-//              System.out.println("FOUND ANNOTATION!");
-//              method.instrument(new ExprEditor() {
-//                  public void edit(MethodCall m) throws CannotCompileException {
-//                      try {
-//                          Class<?> value = annotation.type();
-//                      } catch (MirroredTypeException e) {
-//                          TypeMirror annotationTypeMirror = e.getTypeMirror();
-//                          System.out.println("ANNOTATION type: " + annotationTypeMirror.toString() + ", METHOD: " + annotation.method());
-//                          System.out.println("METHOD type: " + m.getClassName() + ", METHOD: " + m.getMethodName());
-//                          if (m.getClassName().equals(annotationTypeMirror.toString()) && m.getMethodName().equals(annotation.method())) {
-//                              System.out.println("MATCHES!");
-//                              try {
-//                                  addMethod(subElement, ctClass, w, mirrorClassName, m.getMethod());
-//                              } catch (NotFoundException nfe) {
-//                                  nfe.printStackTrace();
-//                              }
-//                          }
-//                      }
-//                  }
-//              });
-//          }
-//      }
-//  }
-
   }
     
   private String toMirrorSafeName(CtClass containingClass, CtClass type) throws NotFoundException {

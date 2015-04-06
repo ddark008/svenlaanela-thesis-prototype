@@ -1,33 +1,14 @@
 package sample;
 
 public class SampleClass {
-  private final String instanceVariable = "InstanceField";
-  private final static String staticVariable = "StaticField";
-
-  public String anotherMethod(String input) {
-    System.out.println("Another method: " + input);
-    return input;
-  }
-  
-  public String publicMethod(String input) {
-    System.out.println("Public method: " + input);
-    return input;
-  }
+  private final String instanceField = "InstanceField";
   
   private final String instanceMethod(String input) {
-    return input + instanceVariable;
+    return input + instanceField;
   }
-
-  private static final String staticMethod(String input) {
-    return input + staticVariable;
-  }
-
-  public final String instanceAccessor(String input) {
+  
+  public final String publicMethod(String input) {
     return instanceMethod(input);
-  }
-
-  public static final String staticAccessor(String input) {
-    return staticMethod(input);
   }
 }
 
