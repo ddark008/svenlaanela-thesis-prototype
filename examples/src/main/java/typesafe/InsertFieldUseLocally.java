@@ -1,5 +1,6 @@
 package typesafe;
 
+import org.zeroturnaround.javassist.annotation.Modify;
 import org.zeroturnaround.javassist.annotation.Patches;
 
 import sample.SampleClass;
@@ -8,7 +9,7 @@ import sample.SampleClass;
 public class InsertFieldUseLocally extends SampleClass_Mirror {
   private String addedField = "addedField";
 
-  @Override
+  @Modify
   String instanceMethod(String $1) {
     $1 = $1 + addedField;
     return super.instanceMethod($1);

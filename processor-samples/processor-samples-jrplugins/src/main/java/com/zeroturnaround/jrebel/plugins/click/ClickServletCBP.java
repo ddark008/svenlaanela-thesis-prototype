@@ -6,7 +6,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.click.ClickServlet;
 import org.apache.click.ClickServlet_Mirror;
-import org.zeroturnaround.javassist.annotation.Before;
 import org.zeroturnaround.javassist.annotation.Patches;
 
 @Patches(ClickServlet.class)

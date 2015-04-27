@@ -1,4 +1,4 @@
-package org.zeroturnaround.javassist.annotation.processor;
+package org.zeroturnaround.javassist.annotation.processor.mirror;
 
 import java.util.Arrays;
 
@@ -13,6 +13,8 @@ import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.bytecode.AccessFlag;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zeroturnaround.javassist.annotation.MethodCall;
 
 /**
@@ -20,10 +22,15 @@ import org.zeroturnaround.javassist.annotation.MethodCall;
  *
  */
 public class MirrorClass {
+  private static final Logger logger = LoggerFactory.getLogger(MirrorClass.class);
   private final String originalClassName;
   
   public MirrorClass(String originalClassName) {
     this.originalClassName = originalClassName;
+  }
+  
+  public String getOriginalClassName() {
+    return originalClassName;
   }
   
   public String getName() {
@@ -57,7 +64,6 @@ public class MirrorClass {
 
   private String generateBodySource(CtClass ctClass) throws Exception {
     StringBuilder result = new StringBuilder();
-    System.out.println("Generating mirror for class: " + ctClass.getName());
     
     String mirrorClassName = ctClass.getSimpleName() + "_Mirror";
     if (mirrorClassName.contains("$")) {
@@ -99,7 +105,7 @@ public class MirrorClass {
     // add nested classes
     for (CtClass nestedClass : ctClass.getDeclaredClasses()) {
       String innerClassName = nestedClass.getName().substring(ctClass.getName().length() + 1);
-      System.out.println("Nested class: " + innerClassName);
+      logger.debug("Nested class: " + innerClassName);
       try {
         Integer.parseInt(innerClassName); // anonymous inner class
       }
@@ -111,10 +117,10 @@ public class MirrorClass {
 
     // add constructors, convert to public for access/override
     for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
-      System.out.println("Adding constructor for " + mirrorClassName + " " + constructor.getModifiers() + " " + Modifier.toString(constructor.getModifiers()));
-      System.out.println("Checking for synthetic");
+      logger.debug("Adding constructor for " + mirrorClassName + " " + constructor.getModifiers() + " " + Modifier.toString(constructor.getModifiers()));
+      logger.debug("Checking for synthetic");
       if ((constructor.getModifiers() & AccessFlag.SYNTHETIC) != 0 || constructor.getModifiers() == 0) { // wtf
-        System.out.println("is synthetic");
+        logger.debug("is synthetic");
         continue;
       }
       String s = "public " + mirrorClassName + "(\n";
@@ -168,10 +174,10 @@ public class MirrorClass {
 
     // convert all methods to public non-final for access/override
     for (CtMethod method : ctClass.getDeclaredMethods()) {
-      System.out.println("Adding method for " + mirrorClassName + " " + method.getModifiers() + " " + Modifier.toString(method.getModifiers()));
-      System.out.println("Checking for synthetic");
+      logger.debug("Adding method for " + mirrorClassName + " " + method.getModifiers() + " " + Modifier.toString(method.getModifiers()));
+      logger.debug("Checking for synthetic");
       if ((method.getModifiers() & AccessFlag.SYNTHETIC) != 0 || method.getName().startsWith("access$")) { // wtf
-        System.out.println("is synthetic");
+        logger.debug("is synthetic");
         continue;
       }
       String methodSrc = addMethod(ctClass, mirrorClassName, method);

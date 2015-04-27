@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import org.junit.Assert;
+import org.zeroturnaround.javassist.annotation.processor.mirror.MirrorClass;
 
 public class BaseClassGenerationTests {
 

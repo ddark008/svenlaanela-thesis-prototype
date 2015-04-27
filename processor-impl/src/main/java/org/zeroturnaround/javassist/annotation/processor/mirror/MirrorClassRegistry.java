@@ -1,4 +1,4 @@
-package org.zeroturnaround.javassist.annotation.processor;
+package org.zeroturnaround.javassist.annotation.processor.mirror;
 
 import java.util.HashMap;
 import java.util.Map;

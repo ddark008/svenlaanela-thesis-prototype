@@ -1,4 +1,4 @@
-package org.zeroturnaround.javassist.annotation.processor;
+package org.zeroturnaround.javassist.annotation.processor.wiring;
 
 import javassist.ClassPool;
 import javassist.CtClass;

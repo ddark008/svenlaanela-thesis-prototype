@@ -11,7 +11,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.NotFoundException;
 
-import org.zeroturnaround.javassist.annotation.processor.JavassistClassBytecodeProcessor;
+import org.zeroturnaround.javassist.annotation.processor.wiring.JavassistClassBytecodeProcessor;
 
 // Uses the local classloader to lookup the class bytecode, and returns it by applying transformations
 public class JavassistCBPLoader {

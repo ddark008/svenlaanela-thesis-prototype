@@ -8,7 +8,7 @@ import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 
-import org.zeroturnaround.javassist.annotation.processor.JavassistClassBytecodeProcessor;
+import org.zeroturnaround.javassist.annotation.processor.wiring.JavassistClassBytecodeProcessor;
 
 /**
  * NotThreadSafe

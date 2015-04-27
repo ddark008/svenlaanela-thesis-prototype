@@ -5,7 +5,7 @@ import javassist.*;
 import javassist.expr.*;
 import javassist.bytecode.*;
 
-public class $original.cbpSimpleName implements org.zeroturnaround.javassist.annotation.processor.JavassistClassBytecodeProcessor {
+public class $original.cbpSimpleName implements org.zeroturnaround.javassist.annotation.processor.wiring.JavassistClassBytecodeProcessor {
 
   private static final String COMPANION_FIELD = "__companion";
   private static final String ORIGINAL_FIELD = "__original";
@@ -95,16 +95,6 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
                 
               }
         	  m.replace("");
-        	  
-        	  //TODO: how the fuck to do validation?
-//        	  finalOriginalCopy.instrument(new ExprEditor() {
-//        	    public void edit(MethodCall m2) throws CannotCompileException {
-//        	      if (m2.getClassName().equals(m.get))
-//        	    }
-//        	  });
-        	  
-        	  
-        	  
         	} else if (m.getClassName().equals(ctClass.getName() + "_Mirror")) {
               System.out.println("Updated method call target for companion: "+m.getClassName()+"."+m.getMethodName()+"() -> "+ctClass.getName()+"."+m.getMethodName()+"__original()");
               
@@ -164,12 +154,7 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
     for (CtConstructor method : ctClass.getDeclaredConstructors()) {
       method.insertAfter("{ (("+ORIGINAL_AWARE_CLASS+")"+COMPANION_FIELD+").setOriginal(this); }");
     }
-      
-      // debug
-      // companionClass.writeFile();
-      // ctClass.defrost();
-      // ctClass.writeFile();
-      
+
     companionClass.toClass(); // TODO: NB! it might be incorrect to call this in the context of the ContextClassLoader of a given thread.
   }
 }
