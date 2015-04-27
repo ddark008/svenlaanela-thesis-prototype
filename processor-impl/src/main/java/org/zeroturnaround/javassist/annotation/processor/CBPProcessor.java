@@ -40,22 +40,16 @@ public class CBPProcessor extends AbstractProcessor {
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     try {
-      if (!roundEnv.processingOver()) {
-        for (Element element : roundEnv.getRootElements()) {
-          if (element.getKind() == ElementKind.CLASS && element.getAnnotation(Patches.class) != null) {
-            doProcess(element);
-          }
+      for (Element element : roundEnv.getRootElements()) {
+        if (element.getKind() == ElementKind.CLASS && element.getAnnotation(Patches.class) != null) {
+          doProcess(element);
         }
-        return true;
-      }
-      else {
-        return false;
       }
     }
     catch (RuntimeException e) {
       System.err.println("Generic error running annotation processor " + e);
-      return false;
     }
+    return true;
   }
 
   private void doProcess(Element extensionClass) {
