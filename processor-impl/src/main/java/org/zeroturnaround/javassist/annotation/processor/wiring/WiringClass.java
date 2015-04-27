@@ -16,6 +16,14 @@ import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.zeroturnaround.javassist.annotation.processor.model.OriginalClass;
 import org.zeroturnaround.javassist.annotation.processor.util.IOUtil;
 
+/**
+ * The wiring class holds the logic that binds together the original class and 
+ * its extension class.
+ * 
+ * 
+ * @author lanza
+ *
+ */
 public class WiringClass {
   private static final String WIRING_CLASS_SUFFIX = "CBP";
   
@@ -32,6 +40,8 @@ public class WiringClass {
   }
   
   public String generateSource() {
+    
+    
     PrintWriter w = null;
     try {
       ClassPool classPool = new ClassPool();
@@ -43,14 +53,14 @@ public class WiringClass {
       oc.name = original.getName();
       oc.cbpName = original.getName() + "CBP";
       oc.cbpSimpleName = original.getSimpleName() + "CBP";
-      oc.companion.name = extensionClassName;
+      oc.extension.name = extensionClassName;
   
       Velocity.addProperty(Velocity.RESOURCE_LOADER, "classpath");
       Velocity.addProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
   
       Context ctx = new VelocityContext();
       ctx.put("original", oc);
-      ctx.put("companion", oc.companion);
+      ctx.put("extension", oc.extension);
       
       StringWriter s = new StringWriter();
       w = new PrintWriter(new BufferedWriter(s));

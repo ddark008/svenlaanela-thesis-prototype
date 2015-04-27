@@ -1,6 +1,6 @@
 package org.zeroturnaround.javassist.annotation.processor.model;
 
-public class CompanionClass {
+public class ExtensionClass {
 	
 	public String name;
 	

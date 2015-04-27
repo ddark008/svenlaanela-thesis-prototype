@@ -6,7 +6,7 @@ public class OriginalClass {
 	public String cbpName;
 	public String cbpSimpleName;
 	public String name;
-	public CompanionClass companion = new CompanionClass();
+	public ExtensionClass extension = new ExtensionClass();
 	
 	/*
 	 * Adding public getters because velocity is RETARDED.

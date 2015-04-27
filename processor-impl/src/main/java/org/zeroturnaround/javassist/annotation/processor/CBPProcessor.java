@@ -94,8 +94,6 @@ public class CBPProcessor extends AbstractProcessor {
     new ExtensionClassValidator(extensionClass, originalClassType, processingEnv.getMessager()).validate();
   }
 
-
-  // TODO: Refactor to separate CBP generator class and add unit tests
   private void generateWiringClass(Element extensionClass, TypeMirror originalClass) {    
     System.out.println("Generating wiring class for " + originalClass + " (" + extensionClass + ")");
 
@@ -103,7 +101,7 @@ public class CBPProcessor extends AbstractProcessor {
     try {
       WiringClass wiringClass = new WiringClass(originalClass.toString(), extensionClass.toString());
       
-      JavaFileObject cbpClass = processingEnv.getFiler().createSourceFile(wiringClass.getName(), null);
+      JavaFileObject cbpClass = processingEnv.getFiler().createSourceFile(wiringClass.getName(), extensionClass);
 
       w = new PrintWriter(new BufferedWriter(cbpClass.openWriter()));
       w.print(wiringClass.generateSource());
