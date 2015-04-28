@@ -4,11 +4,10 @@ import java.util.*;
 import javassist.*;
 import javassist.expr.*;
 import javassist.bytecode.*;
+import org.zeroturnaround.javassist.annotation.Modify;
 
 /**
  * TBD:
- * - Field modifiers
- * - Method modifiers
  * - Direct patching (no subclass)
  * - Constructor patching support
  * 
@@ -37,7 +36,11 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
       CtMethod originalCopy = null;
       try {
         originalMethod = originalClass.getDeclaredMethod(extensionMethod.getName(), extensionMethod.getParameterTypes()); // throws NotFoundException if not a method override!
-        originalMethod.setModifiers(extensionMethod.getModifiers());
+        if (extensionMethod.hasAnnotation(Modify.class)) {
+          originalMethod.setModifiers(extensionMethod.getModifiers());
+        } else {
+          
+        }
         originalCopy = CtNewMethod.copy(originalMethod, extensionMethod.getName() + ORIGINAL_METHOD, originalClass, null);
         System.out.println("Created copy for original: "+originalMethod.getName()+"() -> "+originalCopy.getName()+"()");
         originalClass.addMethod(originalCopy);
