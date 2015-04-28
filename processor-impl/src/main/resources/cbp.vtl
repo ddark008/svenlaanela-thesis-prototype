@@ -5,6 +5,14 @@ import javassist.*;
 import javassist.expr.*;
 import javassist.bytecode.*;
 
+/**
+ * TBD:
+ * - Field modifiers
+ * - Method modifiers
+ * - Direct patching (no subclass)
+ * - Constructor patching support
+ * 
+ */
 public class $original.cbpSimpleName implements org.zeroturnaround.javassist.annotation.processor.wiring.JavassistClassBytecodeProcessor {
 
   private static final String EXTENSION_FIELD = "__companion";
@@ -29,6 +37,7 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
       CtMethod originalCopy = null;
       try {
         originalMethod = originalClass.getDeclaredMethod(extensionMethod.getName(), extensionMethod.getParameterTypes()); // throws NotFoundException if not a method override!
+        originalMethod.setModifiers(extensionMethod.getModifiers());
         originalCopy = CtNewMethod.copy(originalMethod, extensionMethod.getName() + ORIGINAL_METHOD, originalClass, null);
         System.out.println("Created copy for original: "+originalMethod.getName()+"() -> "+originalCopy.getName()+"()");
         originalClass.addMethod(originalCopy);
@@ -162,6 +171,15 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
       
     for (CtConstructor extensionConstructor : originalClass.getDeclaredConstructors()) {
       extensionConstructor.insertAfter("{ (("+ORIGINAL_AWARE_CLASS+")"+EXTENSION_FIELD+").setOriginal(this); }");
+    }
+    
+    for (CtField extensionField : extensionClass.getDeclaredFields()) {
+      if (extensionField.hasAnnotation(Modify.class)) {
+        CtField originalField = originalClass.getField(extensionField.getName());
+        originalField.setModifiers(extensionField.getModifiers());
+      } else {
+        
+      }
     }
 
     extensionClass.toClass(); // TODO: NB! it might be incorrect to call this in the context of the ContextClassLoader of a given thread.
