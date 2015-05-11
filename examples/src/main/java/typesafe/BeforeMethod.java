@@ -12,5 +12,5 @@ public class BeforeMethod extends SampleClass_Mirror {
       return null;
     }
     return super.instanceMethod($1);
-  }  
+  }
 }

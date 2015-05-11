@@ -7,6 +7,10 @@ class Parent {
 public class SampleClass extends Parent {
   private final String instanceField = "InstanceField";
   
+  public SampleClass() {
+    super("default");
+  }
+  
   public SampleClass(String s) {
     super(s);
     System.out.println(s);

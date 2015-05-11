@@ -32,10 +32,6 @@ import org.zeroturnaround.javassist.annotation.processor.wiring.WiringClass;
 @SupportedAnnotationTypes("org.zeroturnaround.javassist.annotation.Patches")
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class CBPProcessor extends AbstractProcessor {
-	
-  public CBPProcessor() {
-    super();
-  }
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {

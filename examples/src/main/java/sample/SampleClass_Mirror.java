@@ -11,7 +11,7 @@ public class SampleClass_Mirror {
     return null;
   }
   
-  public final String publicMethod(String input) {
+  public String publicMethod(String input) {
     return null;
   }
 }

@@ -39,10 +39,10 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
         if (extensionMethod.hasAnnotation(Modify.class)) {
           originalMethod.setModifiers(extensionMethod.getModifiers());
         } else {
-          
+          //
         }
         originalCopy = CtNewMethod.copy(originalMethod, extensionMethod.getName() + ORIGINAL_METHOD, originalClass, null);
-        System.out.println("Created copy for original: "+originalMethod.getName()+"() -> "+originalCopy.getName()+"()");
+        System.out.println("Copy method: "+originalMethod.getName()+"() -> "+originalCopy.getName()+"()");
         originalClass.addMethod(originalCopy);
         String target = Modifier.isStatic(extensionMethod.getModifiers()) ? extensionClass.getName() : EXTENSION_FIELD;
         if ("void".equals(originalMethod.getReturnType().getName())) {
@@ -52,7 +52,7 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
         }
       } catch (NotFoundException ignored) {} // expected, not all methods of the companion exist in the original
       
-      
+      // Find anonymous inner classes of types MethodCall instantiated within this method
       final List<String> instrumentClassNames = new ArrayList<String>();
       extensionMethod.instrument(new ExprEditor() {
         public void edit(final NewExpr c) throws CannotCompileException {
@@ -72,21 +72,18 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
         public void edit(final MethodCall m) throws CannotCompileException {
           try {
         	if (m.getClassName().equals(originalClass.getName() + "_Mirror")) {
-            	if (m.getSignature().contains(org.zeroturnaround.javassist.annotation.MethodCall.class.getName().replace('.', '/'))) {
+              // Register a method instrument/edit for the body in methods that call Instrument
+        	  if (m.getSignature().contains(org.zeroturnaround.javassist.annotation.MethodCall.class.getName().replace('.', '/'))) {
             	  /* extract method */
-            	  System.out.println("Instrumenting original method:" + finalOriginalCopy.getSignature());
-            	  LocalVariableAttribute attr = (LocalVariableAttribute) m.getMethod().getMethodInfo().getCodeAttribute().getAttribute(javassist.bytecode.LocalVariableAttribute.tag);
-            	  System.out.println(attr);
-            	  
             	  for (final String instrumentClassName : instrumentClassNames) {
-                    System.out.println("instrumentClass:" +instrumentClassName);
+            	    System.out.println("Instrumenting method:" + finalOriginalCopy.getSignature() + ", class:" +instrumentClassName);
                     CtClass instrumentClass = cp.get(instrumentClassName);
                     for (final CtMethod instrumentMethod : instrumentClass.getDeclaredMethods()) {
                       final String instrumentName = instrumentMethod.getName();
                       final CtClass instrumentReturnType = instrumentMethod.getReturnType();
                       final List<CtClass> instrumentParameterTypes = new ArrayList<CtClass>(Arrays.asList(instrumentMethod.getParameterTypes()));
                       final CtClass instrumentTargetType = instrumentParameterTypes.remove(0);
-                      
+                      // Add an instrumenter as defined in the anonymous class
                       finalOriginalCopy.instrument(new ExprEditor() {
                         public void edit(MethodCall m2) throws CannotCompileException {
                           try {
@@ -171,9 +168,27 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
         }
       });
     }
-      
-    for (CtConstructor extensionConstructor : originalClass.getDeclaredConstructors()) {
-      extensionConstructor.insertAfter("{ (("+ORIGINAL_AWARE_CLASS+")"+EXTENSION_FIELD+").setOriginal(this); }");
+
+    // Static block of extension is executed after original static block
+    CtConstructor extStaticInitializer = extensionClass.getClassInitializer();
+    if (extStaticInitializer != null) {
+      System.out.println("STATIC INIT: " + extStaticInitializer.toString());
+      rewireExtensionClassMethodsToCallOriginal(extStaticInitializer, originalClass);
+      CtConstructor origStaticInitializer = originalClass.getClassInitializer();
+      if (origStaticInitializer == null) {
+        originalClass.makeClassInitializer().setBody(extStaticInitializer, null);
+      } else {
+        origStaticInitializer.insertAfter(extStaticInitializer.toString());
+      }
+    }
+    
+    
+
+    for (CtConstructor extensionConstructor : extensionClass.getDeclaredConstructors()) {
+       
+    }
+    for (CtConstructor originalConstructor : originalClass.getDeclaredConstructors()) {
+      originalConstructor.insertAfter("{ (("+ORIGINAL_AWARE_CLASS+")"+EXTENSION_FIELD+").setOriginal(this); }");
     }
     
     for (CtField extensionField : extensionClass.getDeclaredFields()) {
@@ -186,6 +201,44 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
     }
 
     extensionClass.toClass(); // TODO: NB! it might be incorrect to call this in the context of the ContextClassLoader of a given thread.
+  }
+  
+  private void rewireExtensionClassMethodsToCallOriginal(final CtBehavior extensionClassExecutable, final CtClass originalClass) throws CannotCompileException, NotFoundException {
+    System.out.println("Rewiring extension class executable to call original: "+extensionClassExecutable.getDeclaringClass().getName()+"."+extensionClassExecutable.getName()+extensionClassExecutable.getSignature());
+    extensionClassExecutable.instrument(new ExprEditor() {
+      public void edit(MethodCall m) throws CannotCompileException {
+        try {
+          if (m.getClassName().equals(originalClass.getName() + "_Mirror")) { // is a call on a mirror?
+            System.out.println(originalClass.getName()+"."+m.getMethodName() + m.getSignature());
+            String target = Modifier.isStatic(m.getMethod().getModifiers()) ? originalClass.getName() : ORIGINAL_FIELD;
+            if ("void".equals(m.getMethod().getReturnType().getName())) {
+              m.replace("{ "+target+"." + m.getMethodName() + ORIGINAL_METHOD+"($$); }");
+            } else {
+              m.replace("{ $_ = "+target+"." + m.getMethodName() + ORIGINAL_METHOD+"($$); }");
+            }
+          }
+        } catch (NotFoundException e) {
+          e.printStackTrace(); // TODO
+        }
+      }
+      
+      public void edit(FieldAccess f) throws CannotCompileException {
+        try {
+          if (f.getField().getDeclaringClass().getName().equals(originalClass.getName() +"_Mirror")) { // is a call on a mirror?
+            System.out.println(originalClass.getName()+"."+f.getFieldName());
+            String target = Modifier.isStatic(f.getField().getModifiers()) ? originalClass.getName() : ORIGINAL_FIELD;
+            if (f.isReader()) {
+              f.replace("{ $_ = "+target+"." + f.getFieldName() +"; }");
+            }
+            if (f.isWriter()) {
+              f.replace("{"+target+"."+f.getFieldName()+" = $1; }");
+            }
+          }
+        } catch (NotFoundException e) {
+          e.printStackTrace(); //TODO
+        }
+      }
+    });
   }
   
   private String createSyntheticAccessor(CtClass originalClass, CtField originalField) throws NotFoundException, CannotCompileException {

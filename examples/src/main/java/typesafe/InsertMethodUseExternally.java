@@ -19,6 +19,7 @@ public class InsertMethodUseExternally extends SampleClass_Mirror {
 class UseAddedMethodInOtherClass extends OtherClass_Mirror {
   @Override
   String otherMethod(String $1) {
+    // Currently required
     Object sampleClass = new SampleClass();
     $1 = ((InsertMethodUseExternally) sampleClass).trim($1);
     return super.otherMethod($1);

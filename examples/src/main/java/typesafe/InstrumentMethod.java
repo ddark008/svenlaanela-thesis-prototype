@@ -11,11 +11,11 @@ public class InstrumentMethod extends InstrumentClass_Mirror {
   @Modify
   public String publicMethod(String input) {
     instrument(new MethodCall() {
-      public String instanceMethod(String s) {
-        
+      public String method1(InstrumentClass_Mirror $0, String $1) {
+        return $0.method2($1);
       }
     });
     
-    return super.publicMethod(input) + "!";
+    return super.instrumentMethod(input) + "!";
   }
 }
