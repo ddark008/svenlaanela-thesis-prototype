@@ -6,8 +6,8 @@ public class SampleClass_Mirror {
     
   }
   
-  String instanceField = null;
-  String instanceMethod(String input) {
+  protected String instanceField = null;
+  protected String instanceMethod(String input) {
     return null;
   }
   
