@@ -3,14 +3,14 @@ package typesafe;
 import org.zeroturnaround.javassist.annotation.Modify;
 import org.zeroturnaround.javassist.annotation.Patches;
 
-import sample.SampleClass;
+import sample.ConstructorClass;
+import sample.ConstructorClass_Mirror;
 
-@Patches(SampleClass.class)
-public class AfterConstructor extends SampleClass_Mirror {
-  
+@Patches(ConstructorClass.class)
+public class AfterConstructor extends ConstructorClass_Mirror {
   @Modify
-  public AfterConstructor() {
-    super();
+  public AfterConstructor(String arg) {
+    super(arg);
     System.out.println("Constructing");
   }
 }

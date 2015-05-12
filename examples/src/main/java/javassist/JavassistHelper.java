@@ -57,4 +57,13 @@ public class JavassistHelper {
     }
     return result.toArray(new String[result.size()]);
   }
+  
+  public static CtConstructor[] getAllConstructors(String className) throws NotFoundException {
+    CtClass theClass = getClass(className);
+    return theClass.getDeclaredConstructors();
+  }
+  
+  public static CtConstructor[] getAllConstructors(Class<?> clazz) throws NotFoundException {
+    return getAllConstructors(clazz.getName());
+  }
 }

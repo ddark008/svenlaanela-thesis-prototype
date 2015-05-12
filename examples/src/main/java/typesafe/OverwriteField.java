@@ -7,12 +7,7 @@ import sample.SampleClass;
 import sample.SampleClass_Mirror;
 
 @Patches(SampleClass.class)
-public class BeforeMethod extends SampleClass_Mirror {
+public class OverwriteField extends SampleClass_Mirror {
   @Modify
-  protected String instanceMethod(String $1) {
-    if ($1 == null) {
-      return null;
-    }
-    return super.instanceMethod($1);
-  }
+  String instanceField = "updatedField";
 }

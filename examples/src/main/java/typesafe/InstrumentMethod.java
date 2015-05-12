@@ -5,6 +5,7 @@ import org.zeroturnaround.javassist.annotation.Modify;
 import org.zeroturnaround.javassist.annotation.Patches;
 
 import sample.InstrumentClass;
+import sample.InstrumentClass_Mirror;
 
 @Patches(InstrumentClass.class)
 public class InstrumentMethod extends InstrumentClass_Mirror {

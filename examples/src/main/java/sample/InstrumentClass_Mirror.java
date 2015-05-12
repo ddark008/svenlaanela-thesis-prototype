@@ -1,4 +1,4 @@
-package typesafe;
+package sample;
 
 import org.zeroturnaround.javassist.annotation.MethodCall;
 

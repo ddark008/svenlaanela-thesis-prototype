@@ -9,20 +9,15 @@ import sample.SampleClass;
 import sample.SampleClass_Mirror;
 
 @Patches(SampleClass.class)
-public class InsertMethodUseExternally extends SampleClass_Mirror {
-  public String trim(String input) {
-    if (input == null) {
-      return null;
-    }
-    return input.trim();
-  }
+public class InsertFieldUseExternally extends SampleClass_Mirror {
+  public String addedField = "addedField";
 }
 
 @Patches(OtherClass.class)
-class UseAddedMethodInOtherClass extends OtherClass_Mirror {
+class UseAddedFieldInOtherClass extends OtherClass_Mirror {
   @Modify
   public String otherMethod(String $1) {
-    $1 = ((InsertMethodUseExternally) sampleClass).trim($1);
+    $1 = ((InsertFieldUseExternally) sampleClass).addedField;
     return super.otherMethod($1);
   }
 }
