@@ -6,7 +6,7 @@ import org.thymeleaf.cache.ICacheManager;
 import org.zeroturnaround.javassist.annotation.Patches;
 
 @Patches(TemplateEngine.class)
-public class TemplateEngineCBP extends TemplateEngine_Mirror {
+public class TemplateEngineExtension extends TemplateEngine_Mirror {
 
 	@Override
 	public void setCacheManager(ICacheManager $1) {

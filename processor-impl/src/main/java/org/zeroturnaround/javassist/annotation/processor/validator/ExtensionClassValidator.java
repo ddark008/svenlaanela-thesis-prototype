@@ -44,9 +44,10 @@ public class ExtensionClassValidator {
       CtField[] existingFields = ctClass.getDeclaredFields();
       CtMethod[] existingMethods = ctClass.getDeclaredMethods();
       CtConstructor[] existingConstructors = ctClass.getDeclaredConstructors();
+      
       for (Element element : extensionClass.getEnclosedElements()) {
         boolean shouldExist = false;
-        if (element.getAnnotation(Modify.class) != null || element.getAnnotation(Override.class) != null) { // @Modify annotation elements have to exist in original
+        if (element.getAnnotation(Modify.class) != null || element.getAnnotation(Override.class) != null) { // @Modify and @Override annotation elements have to exist in original
           shouldExist = true;
         }
         boolean doesExist = false;
@@ -68,17 +69,6 @@ public class ExtensionClassValidator {
             }
           }
         }
-        // need to differentiate between default constructor
-        
-//        if (element.getKind() == ElementKind.CONSTRUCTOR) {
-//          ExecutableElement constructor = (ExecutableElement) element;
-//          for (CtConstructor existingConstructor : existingConstructors) {
-//            if (compareTypes(existingConstructor.getParameterTypes(), constructor.getParameters())) {
-//              doesExist = true;
-//              break;
-//            }
-//          }
-//        }
         if (shouldExist && !doesExist) {
           messager.printMessage(Kind.ERROR, "Element annotated with @Modify does not exist in the original class", element);
         }

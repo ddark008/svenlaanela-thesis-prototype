@@ -80,8 +80,12 @@ public class MirrorClass {
       if (Modifier.isAbstract(modifiers)) {
         modifiers = Modifier.clear(modifiers, Modifier.ABSTRACT);
       }
-
-      result.append(Modifier.toString(modifiers) + " class " + mirrorClassName); // public class className
+      
+      if (!Modifier.isInterface(modifiers)) {
+        result.append(Modifier.toString(modifiers) + " class " + mirrorClassName); // public class className
+      } else {
+        result.append(Modifier.toString(modifiers) + " " + mirrorClassName);
+      }
       CtClass superClass = ctClass.getSuperclass();
       if (superClass != null && !"java.lang.Object".equals(superClass.getName())) {
         String superClassName = superClass.getName().replace("$", ".");

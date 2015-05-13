@@ -9,7 +9,7 @@ import org.apache.click.ClickServlet_Mirror;
 import org.zeroturnaround.javassist.annotation.Patches;
 
 @Patches(ClickServlet.class)
-public class ClickServletCBP extends ClickServlet_Mirror {
+public class ClickServletExtension extends ClickServlet_Mirror {
 	
 	private void rebuildConfigService() {
 		ServletContext sc = getServletContext();
@@ -22,16 +22,4 @@ public class ClickServletCBP extends ClickServlet_Mirror {
 		rebuildConfigService();
 		super.handleRequest($1, $2, $3); // -> copy, original calls companion, companion calls copy.
 	}
-	
-	public void init() {
-		System.out.println("PATCHED BEFORE!");
-		try {
-			super.init();
-		} catch (Exception e) {
-			System.out.println("CAUGHT: ");
-			e.printStackTrace();
-		}
-		System.out.println("PATCHED AFTER!");
-	}
-	
 }
