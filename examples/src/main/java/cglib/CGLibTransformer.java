@@ -13,7 +13,7 @@ import sample.SampleClass;
 
 public class CGLibTransformer {
   @Test
-  public void testReplaceHelloWorld() throws Exception {
+  public void testReplaceMethodBody() throws Exception {
     Enhancer enhancer = new Enhancer();
     enhancer.setSuperclass(SampleClass.class);
     enhancer.setCallback(new MethodInterceptor() {
@@ -26,7 +26,8 @@ public class CGLibTransformer {
         }
       }
     });
-    SampleClass proxy = (SampleClass) enhancer.create();
-    Assert.assertEquals("Hello world!", proxy.publicMethod("Test"));
+    
+    SampleClass sampleClass = (SampleClass) enhancer.create();
+    Assert.assertEquals("Hello world!", sampleClass.publicMethod("Test"));
   }
 }
