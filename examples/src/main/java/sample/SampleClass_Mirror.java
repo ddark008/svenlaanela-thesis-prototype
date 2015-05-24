@@ -10,4 +10,8 @@ public class SampleClass_Mirror {
   public String publicMethod(String input) {
     return null;
   }
+
+  public static String staticMethod(String $1) {
+    return null;
+  }
 }
