@@ -44,7 +44,7 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
   private void doProcess(Element extensionClass) {
     TypeMirror originalClassType = getPatchedClassType(extensionClass);
     generateMirrorClass(extensionClass, originalClassType);
-    validateExtensionClass(extensionClass, originalClassType);
+//    validateExtensionClass(extensionClass, originalClassType);
     generateWiringClass(extensionClass, originalClassType);
   }
 
