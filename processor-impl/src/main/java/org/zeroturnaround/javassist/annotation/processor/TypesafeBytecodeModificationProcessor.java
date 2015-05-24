@@ -17,21 +17,14 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.JavaFileObject;
 
 import org.zeroturnaround.javassist.annotation.Patches;
-import org.zeroturnaround.javassist.annotation.processor.mirror.MirrorClass;
+import org.zeroturnaround.javassist.annotation.processor.mirror.MirrorClassGenerator;
 import org.zeroturnaround.javassist.annotation.processor.util.IOUtil;
 import org.zeroturnaround.javassist.annotation.processor.validator.ExtensionClassValidator;
 import org.zeroturnaround.javassist.annotation.processor.wiring.WiringClass;
 
-/**
- * First round: Generate mirror class to extend from
- * Second pass: Generate Javassist CBP classes based on method implementation
- * detect if we are overriding any methods
- * companion object
- *
- */
 @SupportedAnnotationTypes("org.zeroturnaround.javassist.annotation.Patches")
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
-public class CBPProcessor extends AbstractProcessor {
+public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -49,11 +42,9 @@ public class CBPProcessor extends AbstractProcessor {
   }
 
   private void doProcess(Element extensionClass) {
-//    ElementUtil.printElement(extensionClass);
-    
     TypeMirror originalClassType = getPatchedClassType(extensionClass);
     generateMirrorClass(extensionClass, originalClassType);
-    checkExtensionClassValidity(extensionClass, originalClassType);
+    validateExtensionClass(extensionClass, originalClassType);
     generateWiringClass(extensionClass, originalClassType);
   }
 
@@ -72,7 +63,7 @@ public class CBPProcessor extends AbstractProcessor {
     System.out.println("Generating mirror class for " + extensionClass);
     PrintWriter w = null;
     try {
-      MirrorClass mirrorClass = new MirrorClass(originalClass.toString());
+      MirrorClassGenerator mirrorClass = new MirrorClassGenerator(originalClass.toString());
       
       JavaFileObject mirrorClassObject = processingEnv.getFiler().createSourceFile(mirrorClass.getName(), extensionClass);
       
@@ -86,7 +77,7 @@ public class CBPProcessor extends AbstractProcessor {
     }
   }
   
-  private void checkExtensionClassValidity(Element extensionClass, TypeMirror originalClassType) {
+  private void validateExtensionClass(Element extensionClass, TypeMirror originalClassType) {
     new ExtensionClassValidator(extensionClass, originalClassType, processingEnv.getMessager()).validate();
   }
 

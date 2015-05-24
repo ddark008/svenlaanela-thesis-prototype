@@ -21,11 +21,11 @@ import org.zeroturnaround.javassist.annotation.MethodCall;
  * MirrorClass encapsulates the logic of generating a mirror class (and required hierarchy) for a given original class.
  *
  */
-public class MirrorClass {
-  private static final Logger logger = LoggerFactory.getLogger(MirrorClass.class);
+public class MirrorClassGenerator {
+  private static final Logger logger = LoggerFactory.getLogger(MirrorClassGenerator.class);
   private final String originalClassName;
   
-  public MirrorClass(String originalClassName) {
+  public MirrorClassGenerator(String originalClassName) {
     this.originalClassName = originalClassName;
   }
   
@@ -74,7 +74,7 @@ public class MirrorClass {
     {
       int modifiers = ctClass.getModifiers();
       if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
-        modifiers = Modifier.setPackage(modifiers);
+        modifiers = Modifier.setProtected(modifiers);
       }
       modifiers = Modifier.clear(modifiers, Modifier.FINAL);
       if (Modifier.isAbstract(modifiers)) {
@@ -167,7 +167,7 @@ public class MirrorClass {
     for (CtField field : ctClass.getDeclaredFields()) {
       int modifiers = field.getModifiers();
       if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
-        modifiers = Modifier.setPackage(modifiers);
+        modifiers = Modifier.setProtected(modifiers);
       }
       modifiers = Modifier.clear(modifiers, Modifier.FINAL);
 
