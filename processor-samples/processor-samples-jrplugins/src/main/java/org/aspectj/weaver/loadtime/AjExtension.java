@@ -29,7 +29,7 @@ public class AjExtension extends Aj_Mirror {
 
 	private Aj_Mirror original = new Aj_Mirror();
 	
-	//@Override
+	@Override
 //	@Edit(type=Trace.class, returnType=Void.class, method="error", id=1)
 //	@Edit(type=Trace.class, returnType=Void.class, method="error", id=2)
 //	@Edit(type=Trace.class, returnType=Void.class, method="error", id=3)

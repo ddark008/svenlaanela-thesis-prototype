@@ -31,7 +31,7 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
     try {
       for (Element element : roundEnv.getRootElements()) {
         if (element.getKind() == ElementKind.CLASS && element.getAnnotation(Patches.class) != null) {
-          doProcess(element);
+          doProcess((TypeElement) element);
         }
       }
     }
@@ -41,10 +41,10 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
     return true;
   }
 
-  private void doProcess(Element extensionClass) {
+  private void doProcess(TypeElement extensionClass) {
     TypeMirror originalClassType = getPatchedClassType(extensionClass);
     generateMirrorClass(extensionClass, originalClassType);
-//    validateExtensionClass(extensionClass, originalClassType);
+    validateExtensionClass(extensionClass, originalClassType);
     generateWiringClass(extensionClass, originalClassType);
   }
 
@@ -77,7 +77,7 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
     }
   }
   
-  private void validateExtensionClass(Element extensionClass, TypeMirror originalClassType) {
+  private void validateExtensionClass(TypeElement extensionClass, TypeMirror originalClassType) {
     new ExtensionClassValidator(extensionClass, originalClassType, processingEnv.getMessager()).validate();
   }
 

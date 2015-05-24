@@ -37,9 +37,4 @@ public class ClassMapExtension extends ClassMap_Mirror implements ClassEventList
 		return ClassEventListener.PRIORITY_DEFAULT;
 	}
 
-	
-	
-	
-	
-
 }
