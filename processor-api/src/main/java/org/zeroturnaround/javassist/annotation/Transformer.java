@@ -8,8 +8,6 @@ import java.lang.annotation.Target;
  * specified by the String value. After the annotation processor has constructed
  * a Transformer class for a given original class and its extension class, the
  * Transformer class is marked with the @Transformer annotation.
- * 
- * Used by ClassPathTransformerLoader to find instances of the transformer class
  */
 @Target(value={ElementType.TYPE})
 public @interface Transformer {

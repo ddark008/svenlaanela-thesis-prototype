@@ -24,13 +24,13 @@ import org.zeroturnaround.javassist.annotation.processor.util.IOUtil;
  * @author lanza
  *
  */
-public class WiringClass {
+public class WiringClassGenerator {
   private static final String WIRING_CLASS_SUFFIX = "CBP";
   
   private String originalClassName;
   private String extensionClassName;
   
-  public WiringClass(String originalClassName, String extensionClassName) {
+  public WiringClassGenerator(String originalClassName, String extensionClassName) {
     this.originalClassName = originalClassName;
     this.extensionClassName = extensionClassName;
   }

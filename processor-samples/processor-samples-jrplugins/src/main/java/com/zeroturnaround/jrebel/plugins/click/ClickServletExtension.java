@@ -20,6 +20,6 @@ public class ClickServletExtension extends ClickServlet_Mirror {
 	@Override
 	public void handleRequest(HttpServletRequest $1, HttpServletResponse $2, boolean $3) {
 		rebuildConfigService();
-		super.handleRequest($1, $2, $3); // -> copy, original calls companion, companion calls copy.
+		super.handleRequest($1, $2, $3);
 	}
 }

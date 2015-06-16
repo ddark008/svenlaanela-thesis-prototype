@@ -20,7 +20,7 @@ import org.zeroturnaround.javassist.annotation.Patches;
 import org.zeroturnaround.javassist.annotation.processor.mirror.MirrorClassGenerator;
 import org.zeroturnaround.javassist.annotation.processor.util.IOUtil;
 import org.zeroturnaround.javassist.annotation.processor.validator.ExtensionClassValidator;
-import org.zeroturnaround.javassist.annotation.processor.wiring.WiringClass;
+import org.zeroturnaround.javassist.annotation.processor.wiring.WiringClassGenerator;
 
 @SupportedAnnotationTypes("org.zeroturnaround.javassist.annotation.Patches")
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
@@ -86,7 +86,7 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
 
     PrintWriter w = null;
     try {
-      WiringClass wiringClass = new WiringClass(originalClass.toString(), extensionClass.toString());
+      WiringClassGenerator wiringClass = new WiringClassGenerator(originalClass.toString(), extensionClass.toString());
       
       JavaFileObject cbpClass = processingEnv.getFiler().createSourceFile(wiringClass.getName(), extensionClass);
 

@@ -22,8 +22,6 @@ import org.zeroturnaround.javassist.annotation.Modify;
 
 /**
  * Validator for extension class
- * 
- * TODO: should be refactored to throw found exceptions instead of registering these on the Messager object directly.
  */
 public class ExtensionClassValidator {
   

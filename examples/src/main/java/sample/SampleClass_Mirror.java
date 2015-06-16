@@ -7,7 +7,7 @@ public class SampleClass_Mirror {
     return null;
   }
   
-  public String publicMethod(String input) {
+  public String greet(String input) {
     return null;
   }
 
