@@ -19,5 +19,18 @@
     	<version>4.12</version>
     	<scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.google.testing.compile</groupId>
+      <artifactId>compile-testing</artifactId>
+      <version>0.6</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+  
+  <build>
+    <testResources>
+      <testResource><directory>src/test/resources</directory></testResource>
+      <testResource><directory>src/test/java</directory></testResource>
+    </testResources>
+  </build>
 </project>
