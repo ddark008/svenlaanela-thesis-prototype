@@ -14,7 +14,7 @@
     <module>processor-impl</module>
     <module>processor-loader</module>
     <module>processor-samples</module>
-    <module>examples</module>
+    <!-- <module>examples</module> -->
   </modules>
   
   <dependencies>
