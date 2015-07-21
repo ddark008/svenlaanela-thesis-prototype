@@ -4,7 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
 /**
- * An annotation marking a class bytecode transformer class for a given class
+ * An annotation marking a class byte-code transformer class for a given class
  * specified by the String value. After the annotation processor has constructed
  * a Transformer class for a given original class and its extension class, the
  * Transformer class is marked with the @Transformer annotation.

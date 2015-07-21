@@ -103,6 +103,28 @@ public class MirrorClassGenerator {
 
       if (!Modifier.isInterface(modifiers)) {
         result.append("  protected final void instrument(" + MethodCall.class.getName() + " call) {}\n");
+        
+        // always add default constructor unless we are mirroring an interface!
+        logger.debug("Adding default constructor for " + mirrorClassName);
+        String s = "public " + mirrorClassName + "() {";
+        // find eligible super constructor
+        for (CtConstructor superConstructor : ctClass.getSuperclass().getDeclaredConstructors()) {
+          if (Modifier.isPublic(superConstructor.getModifiers()) 
+              || Modifier.isProtected(superConstructor.getModifiers()) 
+              || Modifier.isPackage(superConstructor.getModifiers()) 
+                 && ctClass.getSuperclass().getPackageName().equals(ctClass.getPackageName())) {
+            s += "  super(";
+            for (int i = 0; i < superConstructor.getParameterTypes().length; i++) {
+              if (i != 0)
+                s += ", ";
+              s += "null";
+            }
+            s += ");";
+            break;
+          }
+        }
+        s += "}\n";
+        result.append(s);
       }
     }
 
@@ -118,25 +140,22 @@ public class MirrorClassGenerator {
         result.append(nestedClassSrc);
       }
     }
-
+    
     // add constructors, convert to public for access/override
     for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
+      if (constructor.getParameterTypes().length == 0) {
+        continue; // do not add default constructor again
+      }
       logger.debug("Adding constructor for " + mirrorClassName + " " + constructor.getModifiers() + " " + Modifier.toString(constructor.getModifiers()));
-      logger.debug("Checking for synthetic");
       if ((constructor.getModifiers() & AccessFlag.SYNTHETIC) != 0 || constructor.getModifiers() == 0) { // wtf
-        logger.debug("is synthetic");
+        logger.debug("Constructor is synthetic");
         continue;
       }
       String s = "public " + mirrorClassName + "(\n";
       for (int i = 0; i < constructor.getParameterTypes().length; i++) {
-        int modifiers = constructor.getModifiers();
-        if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
-          modifiers = Modifier.setPublic(modifiers);
-        }
-
-        CtClass parameter = constructor.getParameterTypes()[i];
         if (i != 0)
           s += ", ";
+        CtClass parameter = constructor.getParameterTypes()[i];
         String parameterName = toMirrorSafeName(ctClass, parameter);
         s += parameterName + " $" + (i + 1);
       }

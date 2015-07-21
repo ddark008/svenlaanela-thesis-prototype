@@ -16,6 +16,8 @@ import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.JavaFileObject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zeroturnaround.javassist.annotation.Patches;
 import org.zeroturnaround.javassist.annotation.processor.mirror.MirrorClassGenerator;
 import org.zeroturnaround.javassist.annotation.processor.util.IOUtil;
@@ -25,27 +27,28 @@ import org.zeroturnaround.javassist.annotation.processor.wiring.WiringClassGener
 @SupportedAnnotationTypes("org.zeroturnaround.javassist.annotation.Patches")
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
+  private static Logger logger = LoggerFactory.getLogger(TypesafeBytecodeModificationProcessor.class);
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-    try {
-      for (Element element : roundEnv.getRootElements()) {
-        if (element.getKind() == ElementKind.CLASS && element.getAnnotation(Patches.class) != null) {
-          doProcess((TypeElement) element);
-        }
+    for (Element element : roundEnv.getRootElements()) {
+      if (element.getKind() == ElementKind.CLASS && element.getAnnotation(Patches.class) != null) {
+        doProcess((TypeElement) element);
       }
-    }
-    catch (RuntimeException e) {
-      System.err.println("Generic error running annotation processor " + e);
     }
     return true;
   }
 
   private void doProcess(TypeElement extensionClass) {
-    TypeMirror originalClassType = getPatchedClassType(extensionClass);
-    generateMirrorClass(extensionClass, originalClassType);
-    validateExtensionClass(extensionClass, originalClassType);
-    generateWiringClass(extensionClass, originalClassType);
+    try {
+      logger.info("Running type-safe bytecode modification processor for class: " + extensionClass);
+      TypeMirror originalClassType = getPatchedClassType(extensionClass);
+      generateMirrorClass(extensionClass, originalClassType);
+      validateExtensionClass(extensionClass, originalClassType);
+      generateWiringClass(extensionClass, originalClassType);
+    } catch (RuntimeException e) {
+      logger.error("Uncaught error running type-safe bytecode modification processor for class : " + extensionClass, e);
+    }
   }
 
   private TypeMirror getPatchedClassType(Element extensionClass) {
@@ -60,7 +63,7 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
   }
   
   private void generateMirrorClass(Element extensionClass, TypeMirror originalClass) {
-    System.out.println("Generating mirror class for " + extensionClass);
+    logger.info("Generating mirror class: " + extensionClass + " (orig: " + originalClass + ")");
     PrintWriter w = null;
     try {
       MirrorClassGenerator mirrorClass = new MirrorClassGenerator(originalClass.toString());
@@ -70,19 +73,20 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
       w = new PrintWriter(new BufferedWriter(mirrorClassObject.openWriter()));
       w.print(mirrorClass.generateSource());
       w.flush();
-    } catch (Exception e) { // TODO: proper error handling
-      System.out.println("Failure generating mirror class" + e);
+    } catch (Exception e) {
+      logger.error("Failure generating mirror class: " + extensionClass + " (orig: " + originalClass + ")", e);
     } finally {
       IOUtil.closeQuietly(w);
     }
   }
   
   private void validateExtensionClass(TypeElement extensionClass, TypeMirror originalClassType) {
+    logger.info("Validating extension class "+extensionClass+" (orig: " + originalClassType + ")");
     new ExtensionClassValidator(extensionClass, originalClassType, processingEnv.getMessager()).validate();
   }
 
   private void generateWiringClass(Element extensionClass, TypeMirror originalClass) {    
-    System.out.println("Generating wiring class for " + originalClass + " (" + extensionClass + ")");
+    logger.info("Generating wiring class " + extensionClass + " (orig:" + originalClass + ")");
 
     PrintWriter w = null;
     try {
@@ -94,7 +98,7 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
       w.print(wiringClass.generateSource());
       w.flush();
     } catch (Exception e) {
-      System.out.println("Failure generating mirror class" + e);
+      logger.error("Failure generating wiring class: " + extensionClass + " (orig: " + originalClass + ")" , e);
       e.printStackTrace();
     } finally {
       IOUtil.closeQuietly(w);

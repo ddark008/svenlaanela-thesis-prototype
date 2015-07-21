@@ -9,11 +9,7 @@ import org.apache.wicket.util.resource.IResourceStream;
 import org.zeroturnaround.javassist.annotation.Patches;
 
 @Patches(CachingResourceStreamLocator.class)
-public class CachingResourceStreamLocatorCBP extends CachingResourceStreamLocator_Mirror {
-	
-	public CachingResourceStreamLocatorCBP(IResourceStreamLocator $1) {
-		super($1);
-	}
+public class CachingResourceStreamLocatorExtension extends CachingResourceStreamLocator_Mirror {
 
 	public void _jr_clearCache() {
 		cache.clear();

@@ -4,7 +4,9 @@ import java.util.*;
 import javassist.*;
 import javassist.expr.*;
 import javassist.bytecode.*;
-import org.zeroturnaround.javassist.annotation.*;
+import org.zeroturnaround.javassist.annotation.Modify;
+import org.zeroturnaround.javassist.annotation.Patches;
+import org.zeroturnaround.javassist.annotation.Transformer;
 
 @Transformer("$original.name")
 public class $original.cbpSimpleName implements org.zeroturnaround.javassist.annotation.processor.wiring.JavassistClassBytecodeProcessor {

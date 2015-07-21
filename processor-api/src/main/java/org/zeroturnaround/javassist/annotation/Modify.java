@@ -6,8 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation marking a field, method or constructor of an extension class
- * as replacing some field, method or constructor of the original. 
+ * An annotation marking a field, method or constructor of an extension class as
+ * replacing some field, method or constructor of the original class.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(value={ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR})

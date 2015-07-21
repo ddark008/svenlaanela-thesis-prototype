@@ -15,7 +15,7 @@ import org.zeroturnaround.javassist.annotation.Patches;
 public class ClassMapExtension extends ClassMap_Mirror 
 implements ClassEventListener {
 	@Modify
-	public ClassMapExtension(Class<?> $1, Log $2) {
+	public ClassMapExtension(Class $1, Log $2) {
 		super($1, $2);
 		ReloaderFactory.getInstance().addHierarchyReloadListener(
 		    clazz, WeakUtil.weakCEL(this));
@@ -27,12 +27,12 @@ implements ClassEventListener {
 		return super.findMethod($1, $2);
 	}
 
-	@Modify
+	@Override
 	public void onClassEvent(int arg0, Class<?> arg1) {
 		methodCache = createMethodCache();
 	}
 
-	@Modify
+	@Override
 	public int priority() {
 		return ClassEventListener.PRIORITY_DEFAULT;
 	}
