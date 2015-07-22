@@ -9,6 +9,16 @@
 
   <dependencies>
     <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>processor-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>processor-impl</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.google.testing.compile</groupId>
       <artifactId>compile-testing</artifactId>
       <version>0.6</version>
@@ -18,8 +28,10 @@
 
   <build>
     <testResources>
-      <testResource><directory>src/test/resources</directory></testResource>
+      <testResource><directory>src/main/java</directory></testResource>
+      <!-- <testResource><directory>src/test/resources</directory></testResource> -->
       <testResource><directory>src/test/java</directory></testResource>
+      <testResource><directory>target/generated-test-sources/test-annotations</directory></testResource>
     </testResources>
   </build>
 </project>
