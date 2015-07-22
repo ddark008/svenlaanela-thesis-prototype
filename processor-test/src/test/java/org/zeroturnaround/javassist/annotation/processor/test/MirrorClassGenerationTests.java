@@ -11,10 +11,23 @@ public class MirrorClassGenerationTests {
 
   @Test
   public void testTopLevelPublicClass() {
+    // Test that extension class compiles and generates two files
     Truth.assert_().about(JavaSourceSubjectFactory.javaSource())
     .that(JavaFileObjects.forResource(TopLevelPublicVisibility.class.getName().replace('.','/') + "Extension.java"))
     .processedWith(new TypesafeBytecodeModificationProcessor())
-    .compilesWithoutError().and().generatesFiles(JavaFileObjects.forResource(TopLevelPublicVisibility.class.getName().replace('.','/')+"_Mirror.java"));
+    .compilesWithoutError()
+    .and().generatesFiles(JavaFileObjects.forResource(TopLevelPublicVisibility.class.getName().replace('.','/')+"_Mirror.java"))
+    .and().generatesFiles(JavaFileObjects.forResource(TopLevelPublicVisibility.class.getName().replace('.','/')+"CBP.java"));
+    
+    // Test that the generated _Mirror class compiles
+    Truth.assert_().about(JavaSourceSubjectFactory.javaSource())
+    .that(JavaFileObjects.forResource(TopLevelPublicVisibility.class.getName().replace('.','/') + "_Mirror.java"))
+    .compilesWithoutError();
+    
+    // Test that the generated _Wiring class compiles
+    Truth.assert_().about(JavaSourceSubjectFactory.javaSource())
+    .that(JavaFileObjects.forResource(TopLevelPublicVisibility.class.getName().replace('.','/')+"CBP.java"))
+    .compilesWithoutError();
   }
   
   @Test
