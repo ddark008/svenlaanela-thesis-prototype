@@ -74,7 +74,7 @@ public class MirrorClassGenerator {
     {
       int modifiers = ctClass.getModifiers();
       if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
-        modifiers = Modifier.setProtected(modifiers);
+        modifiers = Modifier.setPublic(modifiers);
       }
       modifiers = Modifier.clear(modifiers, Modifier.FINAL);
       if (Modifier.isAbstract(modifiers)) {

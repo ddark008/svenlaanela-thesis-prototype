@@ -1,5 +1,5 @@
 package org.zeroturnaround.javassist.annotation.processor.test;
 
-public class TopLevelPublicVisibility {
+public abstract class TopLevelAbstract {
 
 }
