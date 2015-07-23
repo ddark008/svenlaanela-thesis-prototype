@@ -102,7 +102,7 @@ public class MirrorClassGenerator {
       result.append(" {\n");
 
       if (!Modifier.isInterface(modifiers)) {
-        result.append("  protected final void instrument(" + MethodCall.class.getName() + " call) {}\n");
+        result.append("protected final void instrument(" + MethodCall.class.getName() + " call) {}\n");
         
         // always add default constructor unless we are mirroring an interface!
         logger.debug("Adding default constructor for " + mirrorClassName);
@@ -113,13 +113,13 @@ public class MirrorClassGenerator {
               || Modifier.isProtected(superConstructor.getModifiers()) 
               || Modifier.isPackage(superConstructor.getModifiers()) 
                  && ctClass.getSuperclass().getPackageName().equals(ctClass.getPackageName())) {
-            s += "  super(";
+            s += " super(";
             for (int i = 0; i < superConstructor.getParameterTypes().length; i++) {
               if (i != 0)
                 s += ", ";
               s += "null";
             }
-            s += ");";
+            s += "); ";
             break;
           }
         }
@@ -151,7 +151,7 @@ public class MirrorClassGenerator {
         logger.debug("Constructor is synthetic");
         continue;
       }
-      String s = "public " + mirrorClassName + "(\n";
+      String s = "public " + mirrorClassName + "(";
       for (int i = 0; i < constructor.getParameterTypes().length; i++) {
         if (i != 0)
           s += ", ";
@@ -235,12 +235,12 @@ public class MirrorClassGenerator {
       result.append(";\n");
     }
     else {
-      result.append("{\n");
+      result.append(" {");
       String defaultValue = getDefaultValue(method.getReturnType());
       if (defaultValue != null) {
-        result.append("return " + defaultValue + ";\n");
+        result.append(" return " + defaultValue + "; ");
       }
-      result.append("}");
+      result.append("}\n");
     }
     return result.toString();
   }

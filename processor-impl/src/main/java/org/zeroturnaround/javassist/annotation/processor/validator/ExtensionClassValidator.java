@@ -46,7 +46,7 @@ public class ExtensionClassValidator {
   }
   
   public void validate() {
-    logger.info("Validating extension class: " + extensionClass.toString());
+//    logger.info("Validating extension class: " + extensionClass.toString());
     try {
       ClassPool classPool = ClassPool.getDefault();
       classPool.insertClassPath(new ClassClassPath(this.getClass()));
