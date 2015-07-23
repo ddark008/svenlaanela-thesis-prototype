@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.javassist.annotation.Patches;
 import org.zeroturnaround.javassist.annotation.processor.mirror.MirrorClassGenerator;
+import org.zeroturnaround.javassist.annotation.processor.mirror.MirrorClassRegistry;
 import org.zeroturnaround.javassist.annotation.processor.util.IOUtil;
 import org.zeroturnaround.javassist.annotation.processor.validator.ExtensionClassValidator;
 import org.zeroturnaround.javassist.annotation.processor.wiring.WiringClassGenerator;
@@ -29,6 +30,8 @@ import org.zeroturnaround.javassist.annotation.processor.wiring.WiringClassGener
 public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
   private static Logger logger = LoggerFactory.getLogger(TypesafeBytecodeModificationProcessor.class);
 
+  private MirrorClassRegistry mirrorClassRegistry = new MirrorClassRegistry();
+  
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     for (Element element : roundEnv.getRootElements()) {
@@ -41,8 +44,10 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
 
   private void doProcess(TypeElement extensionClass) {
     try {
-      logger.info("Running type-safe bytecode modification processor for class: " + extensionClass);
+      logger.info("");
+      logger.info("--- @Patches on " + extensionClass);
       TypeMirror originalClassType = getPatchedClassType(extensionClass);
+      logger.info("(original: " + originalClassType.toString()+")");
       generateMirrorClass(extensionClass, originalClassType);
       validateExtensionClass(extensionClass, originalClassType);
       generateWiringClass(extensionClass, originalClassType);
@@ -63,42 +68,46 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
   }
   
   private void generateMirrorClass(Element extensionClass, TypeMirror originalClass) {
-    logger.info("Generating mirror class: " + extensionClass + " (orig: " + originalClass + ")");
+    MirrorClassGenerator mirrorClass = new MirrorClassGenerator(originalClass.toString());
+    if (mirrorClassRegistry.contains(mirrorClass.getName())) {
+      logger.info("Existing mirror class: " + mirrorClassRegistry.getMirror(mirrorClass.getName()));
+      return;
+    } else {
+      logger.info("Generating mirror class: " + mirrorClass.getName());      
+    }
+    
     PrintWriter w = null;
-    try {
-      MirrorClassGenerator mirrorClass = new MirrorClassGenerator(originalClass.toString());
-      
+    try {      
       JavaFileObject mirrorClassObject = processingEnv.getFiler().createSourceFile(mirrorClass.getName(), extensionClass);
       
       w = new PrintWriter(new BufferedWriter(mirrorClassObject.openWriter()));
       w.print(mirrorClass.generateSource());
       w.flush();
     } catch (Exception e) {
-      logger.error("Failure generating mirror class: " + extensionClass + " (orig: " + originalClass + ")", e);
+      logger.error("Failure generating mirror class: " + mirrorClass.getName(), e);
     } finally {
       IOUtil.closeQuietly(w);
     }
   }
   
   private void validateExtensionClass(TypeElement extensionClass, TypeMirror originalClassType) {
-    logger.info("Validating extension class "+extensionClass+" (orig: " + originalClassType + ")");
+    logger.info("Validating extension class");
     new ExtensionClassValidator(extensionClass, originalClassType, processingEnv.getMessager()).validate();
   }
 
   private void generateWiringClass(Element extensionClass, TypeMirror originalClass) {    
-    logger.info("Generating wiring class " + extensionClass + " (orig:" + originalClass + ")");
+    WiringClassGenerator wiringClass = new WiringClassGenerator(originalClass.toString(), extensionClass.toString());
+    logger.info("Generating wiring class: " + wiringClass.getName());
 
     PrintWriter w = null;
     try {
-      WiringClassGenerator wiringClass = new WiringClassGenerator(originalClass.toString(), extensionClass.toString());
-      
       JavaFileObject cbpClass = processingEnv.getFiler().createSourceFile(wiringClass.getName(), extensionClass);
 
       w = new PrintWriter(new BufferedWriter(cbpClass.openWriter()));
       w.print(wiringClass.generateSource());
       w.flush();
     } catch (Exception e) {
-      logger.error("Failure generating wiring class: " + extensionClass + " (orig: " + originalClass + ")" , e);
+      logger.error("Failure generating wiring class: " + wiringClass.getName() , e);
       e.printStackTrace();
     } finally {
       IOUtil.closeQuietly(w);
