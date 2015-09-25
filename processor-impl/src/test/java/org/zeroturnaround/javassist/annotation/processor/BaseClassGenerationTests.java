@@ -49,6 +49,4 @@ public class BaseClassGenerationTests {
       if (reader != null) try { reader.close(); } catch (Exception ignored) {}
     }
   }
-
-  
 }

@@ -1,14 +1,13 @@
 package ee.lanza.javassist.annotation.processor.usecases;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import javassist.ByteArrayClassPath;
 import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
-
 import org.zeroturnaround.javassist.annotation.processor.wiring.JavassistClassBytecodeProcessor;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * NotThreadSafe
@@ -27,9 +26,9 @@ public class TestUtil {
       try {
         ClassPool classPool = ClassPool.getDefault();
         classPool.insertClassPath(new ClassClassPath(TestUtil.class));
+
         CtClass ctClass = classPool.get(className);
         processor.process(classPool, TestUtil.class.getClassLoader(), ctClass);
-
         byte[] bytes = ctClass.toBytecode();
 
         ClassPool cp2 = ClassPool.getDefault();
