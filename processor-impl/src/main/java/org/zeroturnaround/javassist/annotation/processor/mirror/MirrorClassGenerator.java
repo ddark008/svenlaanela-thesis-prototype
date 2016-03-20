@@ -2,20 +2,12 @@ package org.zeroturnaround.javassist.annotation.processor.mirror;
 
 import java.util.Arrays;
 
-import javassist.CannotCompileException;
-import javassist.ClassClassPath;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtConstructor;
-import javassist.CtField;
-import javassist.CtMethod;
-import javassist.Modifier;
-import javassist.NotFoundException;
-import javassist.bytecode.AccessFlag;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.javassist.annotation.MethodCall;
+
+import javassist.*;
+import javassist.bytecode.AccessFlag;
 
 /**
  * MirrorClass encapsulates the logic of generating a mirror class (and required hierarchy) for a given original class.
@@ -24,8 +16,10 @@ import org.zeroturnaround.javassist.annotation.MethodCall;
 public class MirrorClassGenerator {
   private static final Logger logger = LoggerFactory.getLogger(MirrorClassGenerator.class);
   private final String originalClassName;
+  private final ClassPool classPool;
   
-  public MirrorClassGenerator(String originalClassName) {
+  public MirrorClassGenerator(ClassPool classPool, String originalClassName) {
+    this.classPool = classPool;
     this.originalClassName = originalClassName;
   }
   
@@ -47,9 +41,6 @@ public class MirrorClassGenerator {
   }
   
   private String generateSource(String originalClassName) throws Exception {
-    ClassPool classPool = ClassPool.getDefault();
-    classPool.insertClassPath(new ClassClassPath(this.getClass()));
-    
     CtClass originalClass = classPool.get(originalClassName);
     return generateSource(originalClass);
   }

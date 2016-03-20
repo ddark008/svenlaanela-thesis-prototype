@@ -4,17 +4,16 @@ import java.io.BufferedWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import javassist.ClassClassPath;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.NotFoundException;
-
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.zeroturnaround.javassist.annotation.processor.model.OriginalClass;
 import org.zeroturnaround.javassist.annotation.processor.util.IOUtil;
+
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.NotFoundException;
 
 /**
  * The wiring class holds the logic that binds together the original class and 
@@ -29,10 +28,12 @@ public class WiringClassGenerator {
   
   private String originalClassName;
   private String extensionClassName;
+  private ClassPool classPool;
   
-  public WiringClassGenerator(String originalClassName, String extensionClassName) {
+  public WiringClassGenerator(ClassPool classPool, String originalClassName, String extensionClassName) {
     this.originalClassName = originalClassName;
     this.extensionClassName = extensionClassName;
+    this.classPool = classPool;
   }
   
   public String getName() {
@@ -44,8 +45,6 @@ public class WiringClassGenerator {
     
     PrintWriter w = null;
     try {
-      ClassPool classPool = new ClassPool();
-      classPool.insertClassPath(new ClassClassPath(this.getClass()));
       final CtClass original = classPool.get(originalClassName);
       
       OriginalClass oc = new OriginalClass();

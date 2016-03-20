@@ -1,21 +1,8 @@
 package org.zeroturnaround.javassist.annotation.processor.validator;
 
 import java.util.List;
-
-import javassist.ClassClassPath;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtConstructor;
-import javassist.CtField;
-import javassist.CtMethod;
-import javassist.NotFoundException;
-
 import javax.annotation.processing.Messager;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
+import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
@@ -23,6 +10,8 @@ import javax.tools.Diagnostic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.javassist.annotation.Modify;
+
+import javassist.*;
 
 /**
  * Validator for extension class
@@ -38,18 +27,18 @@ public class ExtensionClassValidator {
   private final TypeElement extensionClass;
   private final TypeMirror originalClass;
   private final Messager messager;
+  private final ClassPool classPool;
 
-  public ExtensionClassValidator(TypeElement extensionClass, TypeMirror originalClass, Messager messager) {
+  public ExtensionClassValidator(ClassPool classPool, TypeElement extensionClass, TypeMirror originalClass, Messager messager) {
     this.extensionClass = extensionClass;
     this.originalClass = originalClass;
     this.messager = messager;
+    this.classPool = classPool;
   }
   
   public void validate() {
 //    logger.info("Validating extension class: " + extensionClass.toString());
     try {
-      ClassPool classPool = ClassPool.getDefault();
-      classPool.insertClassPath(new ClassClassPath(this.getClass()));
       CtClass ctClass = classPool.get(originalClass.toString());
 //      CtConstructor[] existingConstructors = ctClass.getDeclaredConstructors();
       

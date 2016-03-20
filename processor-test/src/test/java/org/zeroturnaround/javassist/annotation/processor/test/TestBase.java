@@ -38,6 +38,10 @@ public class TestBase {
     return suffix;
   }
 
+  static ClassAssert assertThat(JavaFileObject jfo) {
+    return new ClassAssert(jfo);
+  }
+
   static ClassAssert assertThat(Class<?> clazz) {
     return new ClassAssert(clazz);
   }
@@ -60,13 +64,22 @@ public class TestBase {
 
   static class ClassAssert {
     private String className;
+    private JavaFileObject jfo;
+    ClassAssert(JavaFileObject jfo) {
+      this.jfo = jfo;
+    }
     ClassAssert(Class<?> clazz) {
       this.className = clazz.getName();
     }
 
     JavaSourcesSubject.SingleSourceAdapter withSuffix(String... suffices) {
-      return Truth.assert_().about(JavaSourceSubjectFactory.javaSource())
-          .that(sourceOf(className, suffices));
+      if (jfo != null) {
+        return Truth.assert_().about(JavaSourceSubjectFactory.javaSource())
+            .that(jfo);
+      } else {
+        return Truth.assert_().about(JavaSourceSubjectFactory.javaSource())
+            .that(sourceOf(className, suffices));
+      }
     }
 
     JavaSourcesSubject.SingleSourceAdapter mirror() {

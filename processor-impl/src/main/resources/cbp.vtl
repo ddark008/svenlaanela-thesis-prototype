@@ -22,7 +22,7 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
     CtClass extensionClass = cp.get("$extension.name");
     extensionClass.addField(CtField.make("private $original.name "+ORIGINAL_FIELD+" = null;", extensionClass));
     extensionClass.addInterface(cp.get(ORIGINAL_AWARE_CLASS));
-    extensionClass.addMethod(CtMethod.make("public void setOriginal(Object original) { "+ORIGINAL_FIELD+" = ($original.name) original; }", extensionClass));
+    extensionClass.addMethod(CtMethod.make("public void setOriginal(java.lang.Object original) { "+ORIGINAL_FIELD+" = ($original.name) original; }", extensionClass));
       
     for (final CtMethod extensionMethod : extensionClass.getDeclaredMethods()) {
       // for all methods that are overriden in the companion class, create a copy of the original method
@@ -197,7 +197,7 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
       }
     }
 
-    extensionClass.toClass(); // TODO: NB! it might be incorrect to call this in the context of the ContextClassLoader of a given thread.
+    extensionClass.toClass(cl, null); // TODO: NB! it might be incorrect to call this in the context of the ContextClassLoader of a given thread.
   }
   
   private void rewireExtensionClassMethodsToCallOriginal(final CtBehavior extensionClassExecutable, final CtClass originalClass) throws CannotCompileException, NotFoundException {

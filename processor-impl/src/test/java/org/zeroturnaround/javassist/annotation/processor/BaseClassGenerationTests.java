@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import org.junit.Assert;
 import org.zeroturnaround.javassist.annotation.processor.mirror.MirrorClassGenerator;
 
+import javassist.ClassPool;
+
 public class BaseClassGenerationTests {
 
   protected void testMirrorGeneration(Class<?> clazz) throws Exception {
@@ -18,7 +20,7 @@ public class BaseClassGenerationTests {
   }
   
   private void testMirrorGeneration(String className, boolean debug) throws Exception {
-    MirrorClassGenerator mirror = new MirrorClassGenerator(className);
+    MirrorClassGenerator mirror = new MirrorClassGenerator(ClassPool.getDefault(), className);
     String mirrorSrc = mirror.generateSource();
     Assert.assertNotNull(mirrorSrc);
     if (debug) {

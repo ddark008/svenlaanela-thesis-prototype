@@ -24,12 +24,20 @@ import org.zeroturnaround.javassist.annotation.processor.util.IOUtil;
 import org.zeroturnaround.javassist.annotation.processor.validator.ExtensionClassValidator;
 import org.zeroturnaround.javassist.annotation.processor.wiring.WiringClassGenerator;
 
+import javassist.ClassPool;
+
 @SupportedAnnotationTypes("org.zeroturnaround.javassist.annotation.Patches")
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
   private static Logger logger = LoggerFactory.getLogger(TypesafeBytecodeModificationProcessor.class);
 
   private MirrorClassRegistry mirrorClassRegistry = new MirrorClassRegistry();
+
+  private static final ClassPool classPool;
+
+  static {
+    classPool = new ClassPool(true);
+  }
   
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -67,7 +75,7 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
   }
   
   private void generateMirrorClass(Element extensionClass, TypeMirror originalClass) {
-    MirrorClassGenerator mirrorClass = new MirrorClassGenerator(originalClass.toString());
+    MirrorClassGenerator mirrorClass = new MirrorClassGenerator(classPool, originalClass.toString());
     if (mirrorClassRegistry.contains(mirrorClass.getName())) {
       logger.info("Existing mirror class: " + mirrorClassRegistry.getMirror(mirrorClass.getName()));
       return;
@@ -92,11 +100,11 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
   
   private void validateExtensionClass(TypeElement extensionClass, TypeMirror originalClassType) {
     logger.info("Validating extension class");
-    new ExtensionClassValidator(extensionClass, originalClassType, processingEnv.getMessager()).validate();
+    new ExtensionClassValidator(classPool, extensionClass, originalClassType, processingEnv.getMessager()).validate();
   }
 
   private void generateWiringClass(Element extensionClass, TypeMirror originalClass) {    
-    WiringClassGenerator wiringClass = new WiringClassGenerator(originalClass.toString(), extensionClass.toString());
+    WiringClassGenerator wiringClass = new WiringClassGenerator(classPool, originalClass.toString(), extensionClass.toString());
     logger.info("Generating wiring class: " + wiringClass.getName());
 
     PrintWriter w = null;
