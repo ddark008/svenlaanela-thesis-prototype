@@ -3,7 +3,7 @@ package org.zeroturnaround.javassist.annotation.processor.test;
 import org.junit.Test;
 import org.zeroturnaround.javassist.annotation.processor.TypesafeBytecodeModificationProcessor;
 
-public class TestMirrorClassGeneration extends IntegrationTestBase {
+public class TestMirrorClassGeneration extends TestBase {
 
   @Test
   public void testTopLevelPublicClass() {
@@ -23,10 +23,10 @@ public class TestMirrorClassGeneration extends IntegrationTestBase {
     extensionOf(TopLevelPackage.class)
     .processedWith(new TypesafeBytecodeModificationProcessor())
     .compilesWithoutError()
-    .and().generatesFiles(forMirrorSourceOf(TopLevelPackage.class))
-    .and().generatesFiles(forTransformerSourceOf(TopLevelPackage.class));
+    .and().generatesFiles(mirrorSourceOf(TopLevelPackage.class))
+    .and().generatesFiles(transformerSourceOf(TopLevelPackage.class));
 
-    System.out.println(forMirrorSourceOf(TopLevelPackage.class).toUri());
+    System.out.println(mirrorSourceOf(TopLevelPackage.class).toUri());
 
     mirrorOf(TopLevelPackage.class)
     .compilesWithoutError();
@@ -40,8 +40,8 @@ public class TestMirrorClassGeneration extends IntegrationTestBase {
     extensionOf(TopLevelFinal.class)
     .processedWith(new TypesafeBytecodeModificationProcessor())
     .compilesWithoutError()
-    .and().generatesFiles(forMirrorSourceOf(TopLevelFinal.class))
-    .and().generatesFiles(forTransformerSourceOf(TopLevelFinal.class));
+    .and().generatesFiles(mirrorSourceOf(TopLevelFinal.class))
+    .and().generatesFiles(transformerSourceOf(TopLevelFinal.class));
 
     mirrorOf(TopLevelFinal.class)
     .compilesWithoutError();
@@ -55,8 +55,8 @@ public class TestMirrorClassGeneration extends IntegrationTestBase {
     extensionOf(TopLevelAbstract.class)
     .processedWith(new TypesafeBytecodeModificationProcessor())
     .compilesWithoutError()
-    .and().generatesFiles(forMirrorSourceOf(TopLevelAbstract.class))
-    .and().generatesFiles(forTransformerSourceOf(TopLevelAbstract.class));
+    .and().generatesFiles(mirrorSourceOf(TopLevelAbstract.class))
+    .and().generatesFiles(transformerSourceOf(TopLevelAbstract.class));
     
     mirrorOf(TopLevelAbstract.class)
     .compilesWithoutError();

@@ -19,6 +19,16 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <version>1.1.3</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.1.3</version>
+    </dependency>
+    <dependency>
       <groupId>com.google.testing.compile</groupId>
       <artifactId>compile-testing</artifactId>
       <version>0.6</version>
@@ -31,7 +41,6 @@
       <testResource><directory>src/test/java</directory></testResource>
       <testResource><directory>src/test/resources</directory></testResource>
       <testResource><directory>src/main/java</directory></testResource>
-      <testResource><directory>target/generated-sources/test-annotations</directory></testResource>
       <testResource><directory>target/generated-test-sources/test-annotations</directory></testResource>
     </testResources>
   </build>

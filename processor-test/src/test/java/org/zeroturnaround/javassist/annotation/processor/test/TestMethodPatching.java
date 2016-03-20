@@ -1,48 +1,43 @@
 package org.zeroturnaround.javassist.annotation.processor.test;
 
-import com.google.common.truth.Truth;
-import com.google.testing.compile.JavaSourceSubjectFactory;
 import org.junit.Test;
 import org.zeroturnaround.javassist.annotation.processor.TypesafeBytecodeModificationProcessor;
 
-public class TestMethodPatching extends IntegrationTestBase {
+public class TestMethodPatching extends TestBase {
 
   @Test
-  public void testReplaceMethodNoAnnotation() throws Exception {
-    Truth.assert_().about(JavaSourceSubjectFactory.javaSource())
-        .that(forClassSource(PublicInstanceMethod.class, "ExtensionNoOverride"))
-        .processedWith(new TypesafeBytecodeModificationProcessor())
-        .failsToCompile().withErrorContaining("exists in the original class and must declare @Modify")
-        .in(forClassSource(PublicInstanceMethod.class, "ExtensionNoOverride")).onLine(7).atColumn(17);
+  public void testReplaceMethodWithoutSpecifyingModifyAnnotation() throws Exception {
+    assertThat(PublicInstanceMethod.class).withSuffix("ExtensionNoOverride")
+      .processedWith(new TypesafeBytecodeModificationProcessor())
+      .failsToCompile().withErrorContaining("exists in the original class and must declare @Modify")
+      .in(sourceOf(PublicInstanceMethod.class, "ExtensionNoOverride")).onLine(7).atColumn(17);
   }
 
   @Test
-  public void testReplaceMethodNonExistentMethod() throws Exception {
-    Truth.assert_().about(JavaSourceSubjectFactory.javaSource())
-        .that(forClassSource(PublicInstanceMethod.class, "ExtensionNonExistentMethod"))
-        .processedWith(new TypesafeBytecodeModificationProcessor())
-        .failsToCompile().withErrorContaining("must override or implement a supertype method")
-        .in(forClassSource(PublicInstanceMethod.class, "ExtensionNonExistentMethod")).onLine(11).atColumn(17);
+  public void testReplaceMethodThatDoesNotExistInOriginal() throws Exception {
+    assertThat(PublicInstanceMethod.class).withSuffix("ExtensionNonExistentMethod")
+      .processedWith(new TypesafeBytecodeModificationProcessor())
+      .failsToCompile().withErrorContaining("must override or implement a supertype method")
+      .in(sourceOf(PublicInstanceMethod.class, "ExtensionNonExistentMethod")).onLine(11).atColumn(17);
   }
 
-//  @Test
+  @Test
   public void testReplaceMethodBody() throws Exception {
-    extensionOf(PublicInstanceMethod.class)
-    .processedWith(new TypesafeBytecodeModificationProcessor())
-    .compilesWithoutError()
-    .and().generatesFiles(forMirrorSourceOf(PublicInstanceMethod.class))
-    .and().generatesFiles(forTransformerSourceOf(PublicInstanceMethod.class));
+    assertThat(PublicInstanceMethod.class).withSuffix("ExtensionReplaceMethod")
+      .processedWith(new TypesafeBytecodeModificationProcessor())
+      .compilesWithoutError()
+      .and().generatesFiles(mirrorSourceOf(PublicInstanceMethod.class))
+      .and().generatesFiles(transformerSourceOf(PublicInstanceMethod.class));
 
-    mirrorOf(PublicInstanceMethod.class)
-    .compilesWithoutError();
+    assertThat(PublicInstanceMethod.class).mirror()
+      .compilesWithoutError();
 
-    transformerOf(PublicInstanceMethod.class)
-    .compilesWithoutError();
+    assertThat(PublicInstanceMethod.class).transformer()
+      .compilesWithoutError();
 
-//    System.out.println("!!!!!!!!!!!!!!!!!");
-//
 //    Assert.assertEquals("Hello world!", ((PublicInstanceMethod) TestUtil.createInstance(PublicInstanceMethod.class.getName(), PublicInstanceMethodCBP.class.getName())).access("random"));
 //    System.out.println(((PublicInstanceMethod) TestUtil.createInstance(PublicInstanceMethod.class.getName(), PublicInstanceMethodCBP.class.getName())).access("random"));
+
   }
   
 }

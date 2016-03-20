@@ -3,7 +3,6 @@ package org.zeroturnaround.javassist.annotation.processor;
 import java.io.BufferedWriter;
 import java.io.PrintWriter;
 import java.util.Set;
-
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
@@ -83,6 +82,7 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
       w = new PrintWriter(new BufferedWriter(mirrorClassObject.openWriter()));
       w.print(mirrorClass.generateSource());
       w.flush();
+      logger.info("Finished: " + mirrorClassObject.toUri());
     } catch (Exception e) {
       logger.error("Failure generating mirror class: " + mirrorClass.getName(), e);
     } finally {

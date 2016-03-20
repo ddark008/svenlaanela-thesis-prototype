@@ -1,13 +1,14 @@
 package ee.lanza.javassist.annotation.processor.usecases;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.zeroturnaround.javassist.annotation.processor.wiring.JavassistClassBytecodeProcessor;
+
 import javassist.ByteArrayClassPath;
 import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
-import org.zeroturnaround.javassist.annotation.processor.wiring.JavassistClassBytecodeProcessor;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * NotThreadSafe
@@ -19,7 +20,7 @@ public class TestUtil {
 
   /**
    * Gets the class specified by classname and patched by a processor and loads it under an
-   * isolated classloader
+   * isolated classloader.
    */
   public static Class<?> getClass(String className, JavassistClassBytecodeProcessor processor) {
     if (!classMap.containsKey(className)) {
