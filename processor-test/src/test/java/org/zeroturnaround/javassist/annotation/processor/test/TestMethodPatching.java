@@ -62,9 +62,6 @@ public class TestMethodPatching extends TestBase {
 
     Object patchedObject = TestUtil.createInstance(mcl, PublicInstanceMethod.class.getName(), "org.zeroturnaround.javassist.annotation.processor.test.PublicInstanceMethodCBP");
     Assert.assertEquals("Hello world!", patchedObject.getClass().getMethod("access", String.class).invoke(patchedObject, "random"));
-//    Assert.assertEquals("Hello world!", ((PublicInstanceMethod) ).access("random"));
-//    System.out.println(((PublicInstanceMethod) TestUtil.createInstance(mcl, PublicInstanceMethod.class.getName(), "org.zeroturnaround.javassist.annotation.processor.test.PublicInstanceMethodCBP")).access("random"));
-
   }
 
   private class MagicClassLoader extends ClassLoader {

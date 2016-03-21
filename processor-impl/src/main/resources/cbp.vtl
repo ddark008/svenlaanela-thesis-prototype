@@ -197,7 +197,7 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
       }
     }
 
-    extensionClass.toClass(cl, null); // TODO: NB! it might be incorrect to call this in the context of the ContextClassLoader of a given thread.
+    extensionClass.toClass(cl, null);
   }
   
   private void rewireExtensionClassMethodsToCallOriginal(final CtBehavior extensionClassExecutable, final CtClass originalClass) throws CannotCompileException, NotFoundException {
