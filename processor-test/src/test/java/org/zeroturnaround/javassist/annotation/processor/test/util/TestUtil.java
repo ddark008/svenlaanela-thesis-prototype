@@ -1,11 +1,15 @@
-package ee.lanza.javassist.annotation.processor.usecases;
+package org.zeroturnaround.javassist.annotation.processor.test.util;
+
+import org.zeroturnaround.javassist.annotation.processor.wiring.JavassistClassBytecodeProcessor;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.zeroturnaround.javassist.annotation.processor.wiring.JavassistClassBytecodeProcessor;
-
-import javassist.*;
+import javassist.ByteArrayClassPath;
+import javassist.ClassClassPath;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.LoaderClassPath;
 
 /**
  * NotThreadSafe
