@@ -1,11 +1,11 @@
 package org.zeroturnaround.javassist.annotation.processor.test;
 
-import javax.tools.JavaFileObject;
-
 import com.google.common.truth.Truth;
 import com.google.testing.compile.JavaFileObjects;
 import com.google.testing.compile.JavaSourceSubjectFactory;
 import com.google.testing.compile.JavaSourcesSubject;
+
+import javax.tools.JavaFileObject;
 
 public class TestBase {
   static JavaFileObject mirrorSourceOf(Class<?> clazz) {
@@ -38,12 +38,13 @@ public class TestBase {
     return suffix;
   }
 
-  static ClassAssert assertThat(JavaFileObject jfo) {
-    return new ClassAssert(jfo);
-  }
-
   static ClassAssert assertThat(Class<?> clazz) {
     return new ClassAssert(clazz);
+  }
+
+  static JavaSourcesSubject.SingleSourceAdapter assertThat(TransformableClassDefinition clazz) {
+    return Truth.assert_().about(JavaSourceSubjectFactory.javaSource())
+        .that(sourceOf(clazz.extensionName));
   }
 
   static JavaSourcesSubject.SingleSourceAdapter extensionOf(Class<?> clazz) {
@@ -58,13 +59,12 @@ public class TestBase {
     return assertThat(clazz).transformer();
   }
 
-  static JavaSourcesSubject.SingleSourceAdapter assertThat(Class<?> clazz, String... suffices) {
-    return assertThat(clazz).withSuffix(suffices);
-  }
-
   static class ClassAssert {
     private String className;
     private JavaFileObject jfo;
+    ClassAssert(String className) {
+      this.className = className;
+    }
     ClassAssert(JavaFileObject jfo) {
       this.jfo = jfo;
     }
@@ -73,13 +73,8 @@ public class TestBase {
     }
 
     JavaSourcesSubject.SingleSourceAdapter withSuffix(String... suffices) {
-      if (jfo != null) {
-        return Truth.assert_().about(JavaSourceSubjectFactory.javaSource())
-            .that(jfo);
-      } else {
         return Truth.assert_().about(JavaSourceSubjectFactory.javaSource())
             .that(sourceOf(className, suffices));
-      }
     }
 
     JavaSourcesSubject.SingleSourceAdapter mirror() {

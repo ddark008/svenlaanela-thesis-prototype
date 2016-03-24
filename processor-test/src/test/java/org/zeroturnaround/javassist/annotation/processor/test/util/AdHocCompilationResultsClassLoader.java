@@ -11,27 +11,20 @@ import java.util.Map;
 import javax.tools.JavaFileObject;
 
 public class AdHocCompilationResultsClassLoader extends ClassLoader {
-  private final Map<String, JavaFileObject> classes;
-  private final Map<String, JavaFileObject> resources;
+  private final Map<String, JavaFileObject> classes = new HashMap<String, JavaFileObject>();
+  private final Map<String, JavaFileObject> resources = new HashMap<String, JavaFileObject>();
 
-  public AdHocCompilationResultsClassLoader(Map<String, JavaFileObject> javaFileObjects) {
-    Map<String, JavaFileObject> classes = new HashMap<String, JavaFileObject>();
-    classes.putAll(javaFileObjects);
-    Map<String, JavaFileObject> resources = new HashMap<String, JavaFileObject>();
-    for (JavaFileObject jfo : javaFileObjects.values()) {
-      String name = jfo.getName();
-      if (name.startsWith("/CLASS_OUTPUT/")) {
-        name = name.substring(14);
-      }
-      resources.put(name, jfo);
+  public void appendToClassPath(Map<String, JavaFileObject> javaFileObjects) {
+    for (Map.Entry<String, JavaFileObject> jfo : javaFileObjects.entrySet()) {
+      String name = jfo.getKey();
+      resources.put(name, jfo.getValue());
+
       name = name.replace("/", ".");
       if (name.endsWith(".class")) {
         name = name.substring(0, name.length()-6);
       }
-      classes.put(name, jfo);
+      classes.put(name, jfo.getValue());
     }
-    this.classes = classes;
-    this.resources = resources;
   }
 
   @Override

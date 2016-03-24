@@ -2,28 +2,35 @@ package org.zeroturnaround.javassist.annotation.processor.test.util;
 
 import org.zeroturnaround.javassist.annotation.processor.wiring.JavassistClassBytecodeProcessor;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javassist.ByteArrayClassPath;
+import javassist.CannotCompileException;
 import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.LoaderClassPath;
+import javassist.NotFoundException;
 
-/**
- * NotThreadSafe
- *
- */
 public class TestUtil {
 
-  private static Map<String, Class<?>> classMap = new HashMap<String, Class<?>>();
+  private static Map<String, Class<?>> classMap = new ConcurrentHashMap<String, Class<?>>();
+
+  public static Object createTransformedClassInstance(String className, String processorName, ClassLoader classLoader) throws Exception {
+    return createTransformedClass(className, processorName, classLoader).newInstance();
+  }
+
+  public static Class<?> createTransformedClass(String className, String processorName, ClassLoader classLoader) throws Exception {
+    JavassistClassBytecodeProcessor processor = (JavassistClassBytecodeProcessor) classLoader.loadClass(processorName).newInstance();
+    return createPatchedClass(className, processor, classLoader);
+  }
 
   /**
-   * Gets the class specified by classname and patched by a processor and loads it under an
+   * Get the patched class specified by classname and patched by a processor and loads it under an
    * isolated classloader.
    */
-  public static Class<?> getClass(String className, ClassLoader classLoader, JavassistClassBytecodeProcessor processor) {
+  private static Class<?> createPatchedClass(String className, JavassistClassBytecodeProcessor processor, ClassLoader classLoader) {
     if (!classMap.containsKey(className)) {
       try {
         ClassPool classPool = new ClassPool();
@@ -35,11 +42,8 @@ public class TestUtil {
         processor.process(classPool, classLoader, ctClass);
         byte[] bytes = ctClass.toBytecode();
 
-        ClassPool cp2 = ClassPool.getDefault();
-        cp2.insertClassPath(new ByteArrayClassPath(className, bytes));
-        CtClass cc = cp2.get(className);
-
-        classMap.put(className, cc.toClass(classLoader, null));
+        Class<?> patchedClass = defineClass(className, bytes, classLoader);
+        classMap.put(className, patchedClass);
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -48,17 +52,20 @@ public class TestUtil {
     return classMap.get(className);
   }
 
-  public static Object createInstance(String className) throws Exception {
-    return Class.forName(className).newInstance();
-  }
-  
-//  public static Object createInstance(String className, String processorName) throws Exception {
-//    return createInstance(className, (JavassistClassBytecodeProcessor) Class.forName(processorName).newInstance());
-//  }
+  /**
+   * Defines a new class under a specific classloader
+   * @param name - the name of the class to be defined
+   * @param bytes - the class bytecode
+   * @param loader - the loader under which to define the class.
+   */
+  private static Class<?> defineClass(String name, byte[] bytes, ClassLoader loader) throws NotFoundException, CannotCompileException {
+    ClassPool classPool = new ClassPool();
+//    classPool.insertClassPath(new LoaderClassPath(loader)); // TODO: are there some classes generated that the original class will need from transformation?
+    classPool.insertClassPath(new ByteArrayClassPath(name, bytes));
+    classPool.appendSystemPath();
+    CtClass clazz = classPool.get(name);
 
-  public static Object createInstance(ClassLoader classLoader, String className, String processorName) throws Exception {
-    return getClass(className, classLoader, (JavassistClassBytecodeProcessor) classLoader.loadClass(processorName).newInstance()).newInstance();
+    return clazz.toClass(loader, null);
   }
-
 
 }
