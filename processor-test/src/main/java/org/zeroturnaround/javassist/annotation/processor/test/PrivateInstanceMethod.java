@@ -6,6 +6,6 @@ public class PrivateInstanceMethod {
   }
 
   private String method(String input) {
-    return Util.reverse(input);
+    return input.substring(input.length()/2) + input.substring(0, input.length()/2);
   }
 }

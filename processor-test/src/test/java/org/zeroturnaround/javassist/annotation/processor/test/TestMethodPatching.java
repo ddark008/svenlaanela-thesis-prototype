@@ -111,4 +111,36 @@ public class TestMethodPatching extends TestBase {
 
     Assert.assertEquals("Hello world!", clazz.transform().construct().method("accessPrivate", new Class<?>[]{String.class}).invoke("random"));
   }
+
+  @Test
+  public void testBeforePrivateMethod() throws Exception {
+    final TransformableClassDefinition clazz = new TransformableClassDefinition(PrivateInstanceMethod.class, "ExtensionBeforeMethod");
+
+    assertThat(clazz)
+        .processedWith(new TypesafeBytecodeModificationProcessor())
+        .compilesWithoutError()
+        .and().generatesClasses().forAllOfWhich(new CompileTester.CompilationResultsConsumer() {
+      @Override public void accept(Map<String, JavaFileObject> javaFileObjects) {
+        clazz.appendToClassPath(javaFileObjects);
+      }
+    });
+
+    Assert.assertEquals("xyzdomran", clazz.transform().construct().method("accessPrivate", new Class<?>[]{String.class}).invoke("random"));
+  }
+
+  @Test
+  public void testAfterPrivateMethod() throws Exception {
+    final TransformableClassDefinition clazz = new TransformableClassDefinition(PrivateInstanceMethod.class, "ExtensionAfterMethod");
+
+    assertThat(clazz)
+        .processedWith(new TypesafeBytecodeModificationProcessor())
+        .compilesWithoutError()
+        .and().generatesClasses().forAllOfWhich(new CompileTester.CompilationResultsConsumer() {
+      @Override public void accept(Map<String, JavaFileObject> javaFileObjects) {
+        clazz.appendToClassPath(javaFileObjects);
+      }
+    });
+
+    Assert.assertEquals("domranxyz", clazz.transform().construct().method("accessPrivate", new Class<?>[]{String.class}).invoke("random"));
+  }
 }
