@@ -41,13 +41,17 @@ public class $original.cbpSimpleName implements org.zeroturnaround.javassist.ann
         originalCopy = CtNewMethod.copy(originalMethod, extensionMethod.getName() + ORIGINAL_METHOD, originalClass, null);
         System.out.println("Copy method: "+originalMethod.getName()+"() -> "+originalCopy.getName()+"()");
         originalClass.addMethod(originalCopy);
-        String target = Modifier.isStatic(extensionMethod.getModifiers()) ? extensionClass.getName() : EXTENSION_FIELD;
-        if ("void".equals(originalMethod.getReturnType().getName())) {
-          originalMethod.setBody("{ "+target+"."+extensionMethod.getName()+"($$);}");
-        } else {
-          originalMethod.setBody("{ return "+target+"."+extensionMethod.getName()+"($$);}");
-        }
-      } catch (NotFoundException ignored) {} // expected, not all methods of the companion exist in the original
+      } catch (NotFoundException ignored) { // if a method of the extension class does not exist in the original, add it
+        originalMethod = CtNewMethod.make(extensionMethod.getModifiers(), extensionMethod.getReturnType(), extensionMethod.getName(), extensionMethod.getParameterTypes(), extensionMethod.getExceptionTypes(), null, originalClass);
+        System.out.println("Add new method: "+originalMethod.getName()+"()");
+        originalClass.addMethod(originalMethod);
+      }
+      String target = Modifier.isStatic(extensionMethod.getModifiers()) ? extensionClass.getName() : EXTENSION_FIELD;
+      if ("void".equals(originalMethod.getReturnType().getName())) {
+        originalMethod.setBody("{ "+target+"."+extensionMethod.getName()+"($$);}");
+      } else {
+        originalMethod.setBody("{ return "+target+"."+extensionMethod.getName()+"($$);}");
+      }
       
       // Find anonymous inner classes of types MethodCall instantiated within this method
       final List<String> instrumentClassNames = new ArrayList<String>();

@@ -79,4 +79,36 @@ public class TestMethodPatching extends TestBase {
 
     Assert.assertEquals("modnarabc", clazz.transform().construct().method("access", new Class<?>[]{String.class}).invoke("random"));
   }
+
+  @Test
+  public void testAddMethod() throws Exception {
+    final TransformableClassDefinition clazz = new TransformableClassDefinition(PublicInstanceMethod.class, "ExtensionAddMethod");
+
+    assertThat(clazz)
+        .processedWith(new TypesafeBytecodeModificationProcessor())
+        .compilesWithoutError()
+        .and().generatesClasses().forAllOfWhich(new CompileTester.CompilationResultsConsumer() {
+      @Override public void accept(Map<String, JavaFileObject> javaFileObjects) {
+        clazz.appendToClassPath(javaFileObjects);
+      }
+    });
+
+    Assert.assertEquals("addedMethod!", clazz.transform().construct().method("addedMethod").invoke());
+  }
+
+  @Test
+  public void testReplacePrivateMethod() throws Exception {
+    final TransformableClassDefinition clazz = new TransformableClassDefinition(PrivateInstanceMethod.class, "ExtensionReplaceMethod");
+
+    assertThat(clazz)
+        .processedWith(new TypesafeBytecodeModificationProcessor())
+        .compilesWithoutError()
+        .and().generatesClasses().forAllOfWhich(new CompileTester.CompilationResultsConsumer() {
+      @Override public void accept(Map<String, JavaFileObject> javaFileObjects) {
+        clazz.appendToClassPath(javaFileObjects);
+      }
+    });
+
+    Assert.assertEquals("Hello world!", clazz.transform().construct().method("accessPrivate", new Class<?>[]{String.class}).invoke("random"));
+  }
 }

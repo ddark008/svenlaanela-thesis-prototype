@@ -1,12 +1,11 @@
 package org.zeroturnaround.javassist.annotation.processor.test;
 
-public class PublicInstanceMethod {
-  
-  public String access(String input) {
+public class PrivateInstanceMethod {
+  public String accessPrivate(String input) {
     return method(input);
   }
-  
-  public String method(String input) {
+
+  private String method(String input) {
     return Util.reverse(input);
   }
 }

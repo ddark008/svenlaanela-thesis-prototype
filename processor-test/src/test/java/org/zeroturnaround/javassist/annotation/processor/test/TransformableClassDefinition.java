@@ -25,6 +25,10 @@ public class TransformableClassDefinition {
   public TransformableClassDefinition(String className, String extensionSuffix) {
     this.className = className;
     this.extensionName = className + extensionSuffix;
+
+    /**
+     * The classloader mimics the AppClassLoader, but has additional stuff in its classpath which is generated ad-hoc during runtime.
+     */
     ClassLoader classLoader = TransformableClassDefinition.class.getClassLoader();
     this.classLoader = new AdHocCompilationResultsClassLoader(((URLClassLoader) classLoader).getURLs(), classLoader.getParent());
   }
@@ -43,8 +47,10 @@ public class TransformableClassDefinition {
 
   public TransformedClassDefinition transform(ClassLoader cl, String cbpName) throws Exception {
     if (!transformedClasses.containsKey(cbpName)) {
+      /**
+       * NB! Important!
+       */
       Class<?> transformedClass = (Class<?>) cl.loadClass(TestUtil.class.getName()).getDeclaredMethod("createTransformedClass", String.class, String.class, ClassLoader.class).invoke(null, className, cbpName, cl);
-//      Class<?> transformedClass = TestUtil.createTransformedClass(className, cbpName, cl)
       transformedClasses.put(cbpName, new TransformedClassDefinition(transformedClass));
     }
     return transformedClasses.get(cbpName);
