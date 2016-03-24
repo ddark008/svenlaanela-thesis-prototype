@@ -5,9 +5,6 @@ import org.zeroturnaround.javassist.annotation.Patches;
 
 import java.lang.Override;
 
-/**
- * I do not really like the concept of Mirrors :(
- */
 @Patches(PublicInstanceMethod.class)
 public class PublicInstanceMethodExtensionNonExistentMethod extends PublicInstanceMethod_Mirror {
   @Modify

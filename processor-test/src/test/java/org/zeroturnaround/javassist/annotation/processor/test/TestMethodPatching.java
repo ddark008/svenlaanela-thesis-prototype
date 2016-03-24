@@ -33,7 +33,7 @@ public class TestMethodPatching extends TestBase {
   }
 
   @Test
-  public void testReplaceMethodBody() throws Exception {
+  public void testReplaceMethod() throws Exception {
     final TransformableClassDefinition clazz = new TransformableClassDefinition(PublicInstanceMethod.class, "ExtensionReplaceMethod");
 
     assertThat(clazz)
@@ -46,5 +46,37 @@ public class TestMethodPatching extends TestBase {
     });
 
     Assert.assertEquals("Hello world!", clazz.transform().construct().method("access", new Class<?>[]{String.class}).invoke("random"));
+  }
+
+  @Test
+  public void testBeforeMethod() throws Exception {
+    final TransformableClassDefinition clazz = new TransformableClassDefinition(PublicInstanceMethod.class, "ExtensionBeforeMethod");
+
+    assertThat(clazz)
+        .processedWith(new TypesafeBytecodeModificationProcessor())
+        .compilesWithoutError()
+        .and().generatesClasses().forAllOfWhich(new CompileTester.CompilationResultsConsumer() {
+      @Override public void accept(Map<String, JavaFileObject> javaFileObjects) {
+        clazz.appendToClassPath(javaFileObjects);
+      }
+    });
+
+    Assert.assertEquals("abcmodnar", clazz.transform().construct().method("access", new Class<?>[]{String.class}).invoke("random"));
+  }
+
+  @Test
+  public void testAfterMethod() throws Exception {
+    final TransformableClassDefinition clazz = new TransformableClassDefinition(PublicInstanceMethod.class, "ExtensionAfterMethod");
+
+    assertThat(clazz)
+        .processedWith(new TypesafeBytecodeModificationProcessor())
+        .compilesWithoutError()
+        .and().generatesClasses().forAllOfWhich(new CompileTester.CompilationResultsConsumer() {
+      @Override public void accept(Map<String, JavaFileObject> javaFileObjects) {
+        clazz.appendToClassPath(javaFileObjects);
+      }
+    });
+
+    Assert.assertEquals("modnarabc", clazz.transform().construct().method("access", new Class<?>[]{String.class}).invoke("random"));
   }
 }

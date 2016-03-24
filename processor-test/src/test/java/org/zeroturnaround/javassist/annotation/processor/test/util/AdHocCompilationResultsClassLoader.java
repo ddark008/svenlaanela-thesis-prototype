@@ -5,14 +5,19 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.tools.JavaFileObject;
 
-public class AdHocCompilationResultsClassLoader extends ClassLoader {
+public class AdHocCompilationResultsClassLoader extends URLClassLoader {
   private final Map<String, JavaFileObject> classes = new HashMap<String, JavaFileObject>();
   private final Map<String, JavaFileObject> resources = new HashMap<String, JavaFileObject>();
+
+  public AdHocCompilationResultsClassLoader(URL[] urls, ClassLoader parent) {
+    super(urls, parent);
+  }
 
   public void appendToClassPath(Map<String, JavaFileObject> javaFileObjects) {
     for (Map.Entry<String, JavaFileObject> jfo : javaFileObjects.entrySet()) {

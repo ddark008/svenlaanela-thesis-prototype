@@ -6,6 +6,7 @@ import org.zeroturnaround.javassist.annotation.processor.test.util.TestUtil;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,7 +25,8 @@ public class TransformableClassDefinition {
   public TransformableClassDefinition(String className, String extensionSuffix) {
     this.className = className;
     this.extensionName = className + extensionSuffix;
-    this.classLoader = new AdHocCompilationResultsClassLoader();
+    ClassLoader classLoader = TransformableClassDefinition.class.getClassLoader();
+    this.classLoader = new AdHocCompilationResultsClassLoader(((URLClassLoader) classLoader).getURLs(), classLoader.getParent());
   }
 
   public TransformedClassDefinition transform() throws Exception {
@@ -41,7 +43,9 @@ public class TransformableClassDefinition {
 
   public TransformedClassDefinition transform(ClassLoader cl, String cbpName) throws Exception {
     if (!transformedClasses.containsKey(cbpName)) {
-      transformedClasses.put(cbpName, new TransformedClassDefinition(TestUtil.createTransformedClass(className, cbpName, cl)));
+      Class<?> transformedClass = (Class<?>) cl.loadClass(TestUtil.class.getName()).getDeclaredMethod("createTransformedClass", String.class, String.class, ClassLoader.class).invoke(null, className, cbpName, cl);
+//      Class<?> transformedClass = TestUtil.createTransformedClass(className, cbpName, cl)
+      transformedClasses.put(cbpName, new TransformedClassDefinition(transformedClass));
     }
     return transformedClasses.get(cbpName);
   }
