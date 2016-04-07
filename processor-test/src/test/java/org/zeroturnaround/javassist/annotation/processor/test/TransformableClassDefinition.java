@@ -49,6 +49,8 @@ public class TransformableClassDefinition {
     if (!transformedClasses.containsKey(cbpName)) {
       /**
        * NB! Important!
+       * We are calling the TestUtil class method via reflection so that we would use the (transformed) class definition available
+       * in the custom classloader.
        */
       Class<?> transformedClass = (Class<?>) cl.loadClass(TestUtil.class.getName()).getDeclaredMethod("createTransformedClass", String.class, String.class, ClassLoader.class).invoke(null, className, cbpName, cl);
       transformedClasses.put(cbpName, new TransformedClassDefinition(transformedClass));
@@ -86,7 +88,7 @@ public class TransformableClassDefinition {
     }
 
     public <T> TransformedClassMethodAccessor<T> method(String methodName, Class<T> returnType, Class<?>... paramTypes) throws Exception {
-      return new TransformedClassMethodAccessor<T>(transformedClass.getDeclaredMethod(methodName), null);
+      return new TransformedClassMethodAccessor<T>(transformedClass.getDeclaredMethod(methodName, paramTypes), null);
     }
 
     public class TransformedClassInstance {

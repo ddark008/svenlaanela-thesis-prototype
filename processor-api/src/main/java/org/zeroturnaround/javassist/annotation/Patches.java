@@ -40,5 +40,9 @@ public @interface Patches {
   /**
    * The class whose byte-code is modified by a class annotated with this annotation.
    */
-  public Class<?> value();
+  Class<?> value();
+
+  String min() default "";
+
+  String max() default "";
 }

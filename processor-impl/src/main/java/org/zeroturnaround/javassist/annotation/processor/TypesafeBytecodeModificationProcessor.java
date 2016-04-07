@@ -1,8 +1,19 @@
 package org.zeroturnaround.javassist.annotation.processor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.zeroturnaround.javassist.annotation.Patches;
+import org.zeroturnaround.javassist.annotation.processor.mirror.MirrorClassGenerator;
+import org.zeroturnaround.javassist.annotation.processor.mirror.MirrorClassRegistry;
+import org.zeroturnaround.javassist.annotation.processor.util.IOUtil;
+import org.zeroturnaround.javassist.annotation.processor.validator.ExtensionClassValidator;
+import org.zeroturnaround.javassist.annotation.processor.version.VersionRange;
+import org.zeroturnaround.javassist.annotation.processor.wiring.WiringClassGenerator;
+
 import java.io.BufferedWriter;
 import java.io.PrintWriter;
 import java.util.Set;
+
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
@@ -14,15 +25,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.JavaFileObject;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.zeroturnaround.javassist.annotation.Patches;
-import org.zeroturnaround.javassist.annotation.processor.mirror.MirrorClassGenerator;
-import org.zeroturnaround.javassist.annotation.processor.mirror.MirrorClassRegistry;
-import org.zeroturnaround.javassist.annotation.processor.util.IOUtil;
-import org.zeroturnaround.javassist.annotation.processor.validator.ExtensionClassValidator;
-import org.zeroturnaround.javassist.annotation.processor.wiring.WiringClassGenerator;
 
 import javassist.ClassPool;
 
@@ -52,9 +54,10 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
   private void doProcess(TypeElement extensionClass) {
     try {
       logger.info("");
-      logger.info("--- @Patches on " + extensionClass);
       TypeMirror originalClassType = getPatchedClassType(extensionClass);
-      logger.info("(original: " + originalClassType.toString()+")");
+      VersionRange versionRange = getVersionRange(extensionClass);
+      logger.info("@Patches(" + originalClassType.toString()+", min="+versionRange.min+", max="+versionRange.max+")");
+      logger.info("public class " + extensionClass);
       generateMirrorClass(extensionClass, originalClassType);
       validateExtensionClass(extensionClass, originalClassType);
       generateWiringClass(extensionClass, originalClassType);
@@ -72,6 +75,11 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
     catch (MirroredTypeException e) {
       return e.getTypeMirror();
     }
+  }
+
+  private VersionRange getVersionRange(Element extensionClass) {
+    Patches annotation = extensionClass.getAnnotation(Patches.class);
+    return new VersionRange(annotation.min(), annotation.max());
   }
   
   private void generateMirrorClass(Element extensionClass, TypeMirror originalClass) {

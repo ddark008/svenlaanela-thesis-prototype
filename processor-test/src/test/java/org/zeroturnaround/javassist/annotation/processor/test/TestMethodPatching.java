@@ -97,6 +97,22 @@ public class TestMethodPatching extends TestBase {
   }
 
   @Test
+  public void testAddMethodCallFromExisting() throws Exception {
+    final TransformableClassDefinition clazz = new TransformableClassDefinition(PublicInstanceMethod.class, "ExtensionAddMethodCallFromExisting");
+
+    assertThat(clazz)
+        .processedWith(new TypesafeBytecodeModificationProcessor())
+        .compilesWithoutError()
+        .and().generatesClasses().forAllOfWhich(new CompileTester.CompilationResultsConsumer() {
+      public void accept(Map<String, JavaFileObject> stringJavaFileObjectMap) {
+        clazz.appendToClassPath(stringJavaFileObjectMap);
+      }
+    });
+
+    Assert.assertEquals("addedMethodCalledFromExisting!", clazz.transform().construct().method("access", new Class<?>[]{String.class}).invoke("random"));
+  }
+
+  @Test
   public void testReplacePrivateMethod() throws Exception {
     final TransformableClassDefinition clazz = new TransformableClassDefinition(PrivateInstanceMethod.class, "ExtensionReplaceMethod");
 
@@ -142,5 +158,57 @@ public class TestMethodPatching extends TestBase {
     });
 
     Assert.assertEquals("domranxyz", clazz.transform().construct().method("accessPrivate", new Class<?>[]{String.class}).invoke("random"));
+  }
+
+  @Test
+  public void testReplaceStaticMethodWithoutSpecifyingModifyAnnotation() throws Exception {
+    final TransformableClassDefinition clazz = new TransformableClassDefinition(PublicStaticMethod.class, "ExtensionNoOverride");
+
+    assertThat(clazz)
+        .processedWith(new TypesafeBytecodeModificationProcessor())
+        .failsToCompile().withErrorContaining("exists in the original class and must declare @Modify")
+        .in(sourceOf(PublicStaticMethod.class, "ExtensionNoOverride")).onLine(7).atColumn(17);
+  }
+
+  @Test
+  public void testReplaceStaticMethodThatDoesNotExistInOriginal() throws Exception {
+    final TransformableClassDefinition clazz = new TransformableClassDefinition(PublicStaticMethod.class, "ExtensionNonExistentMethod");
+
+    assertThat(clazz)
+        .processedWith(new TypesafeBytecodeModificationProcessor())
+        .failsToCompile().withErrorContaining("must override or implement a supertype method")
+        .in(sourceOf(PublicStaticMethod.class, "ExtensionNonExistentMethod")).onLine(11).atColumn(17);
+  }
+
+  @Test
+  public void testReplaceStaticMethod() throws Exception {
+    final TransformableClassDefinition clazz = new TransformableClassDefinition(PublicStaticMethod.class, "ExtensionReplaceMethod");
+
+    assertThat(clazz)
+        .processedWith(new TypesafeBytecodeModificationProcessor())
+        .compilesWithoutError()
+        .and().generatesClasses().forAllOfWhich(new CompileTester.CompilationResultsConsumer() {
+      public void accept(Map<String, JavaFileObject> stringJavaFileObjectMap) {
+        clazz.appendToClassPath(stringJavaFileObjectMap);
+      }
+    });
+
+    Assert.assertEquals("replaced public static", clazz.transform().method("access", new Class[]{String.class}).invoke("public static"));
+  }
+
+  @Test
+  public void testAddStaticMethodCallFromExisting() throws Exception {
+    final TransformableClassDefinition clazz = new TransformableClassDefinition(PublicStaticMethod.class, "ExtensionAddMethodCallFromExisting");
+
+    assertThat(clazz)
+        .processedWith(new TypesafeBytecodeModificationProcessor())
+        .compilesWithoutError()
+        .and().generatesClasses().forAllOfWhich(new CompileTester.CompilationResultsConsumer() {
+      public void accept(Map<String, JavaFileObject> stringJavaFileObjectMap) {
+        clazz.appendToClassPath(stringJavaFileObjectMap);
+      }
+    });
+
+    Assert.assertEquals("dohtem dedda", clazz.transform().method("access", new Class[]{String.class}).invoke("added method"));
   }
 }
