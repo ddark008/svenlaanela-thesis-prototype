@@ -56,8 +56,10 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
       logger.info("");
       TypeMirror originalClassType = getPatchedClassType(extensionClass);
       VersionRange versionRange = getVersionRange(extensionClass);
+
       logger.info("@Patches(" + originalClassType.toString()+", min="+versionRange.min+", max="+versionRange.max+")");
       logger.info("public class " + extensionClass);
+
       generateMirrorClass(extensionClass, originalClassType);
       validateExtensionClass(extensionClass, originalClassType);
       generateWiringClass(extensionClass, originalClassType);
