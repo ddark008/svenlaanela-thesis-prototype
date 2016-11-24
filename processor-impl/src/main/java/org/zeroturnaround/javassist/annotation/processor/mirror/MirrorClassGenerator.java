@@ -34,11 +34,11 @@ public class MirrorClassGenerator {
     StringBuilder result = new StringBuilder();
     result.append("package " + originalClass.getPackageName() + ";\n");
     result.append("\n");
-    result.append(generateBodySource(originalClass));
+    result.append(toClassString(originalClass));
     return result.toString();
   }
 
-  private String generateBodySource(CtClass ctClass) throws Exception {
+  private String toClassString(CtClass ctClass) throws Exception {
     StringBuilder result = new StringBuilder();
     
     String mirrorClassName = ctClass.getSimpleName() + "_Mirror";
@@ -47,8 +47,8 @@ public class MirrorClassGenerator {
     }
 
     // add class declaration
+    int modifiers = ctClass.getModifiers();
     {
-      int modifiers = ctClass.getModifiers();
       if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
         modifiers = Modifier.setPublic(modifiers);
       }
@@ -83,64 +83,40 @@ public class MirrorClassGenerator {
 
       if (!Modifier.isInterface(modifiers)) {
         result.append("protected final void instrument(" + MethodCall.class.getName() + " call) {}\n");
-        
-        // always add default constructor unless we are mirroring an interface!
-        logger.debug("Adding default constructor for " + mirrorClassName);
-        result.append("public " + mirrorClassName + "() {");
-
-        // find eligible super constructor
-        for (CtConstructor superConstructor : ctClass.getSuperclass().getDeclaredConstructors()) {
-          if (Modifier.isPublic(superConstructor.getModifiers()) 
-              || Modifier.isProtected(superConstructor.getModifiers()) 
-              || Modifier.isPackage(superConstructor.getModifiers()) 
-                 && ctClass.getSuperclass().getPackageName().equals(ctClass.getPackageName())) {
-            result.append(toConstructorInvocationString(superConstructor));
-            break;
-          }
-        }
-        result.append("}\n");
       }
     }
 
     // add constructors, convert to public for access/override
-    for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
-      if (constructor.getParameterTypes().length == 0) {
-        continue; // do not add default constructor again
-      }
-      logger.debug("Adding constructor for " + mirrorClassName + " " + constructor.getModifiers() + " " + Modifier.toString(constructor.getModifiers()));
-      if ((constructor.getModifiers() & AccessFlag.SYNTHETIC) != 0 || constructor.getModifiers() == 0) { // wtf
-        logger.debug("Constructor is synthetic");
-        continue;
-      }
-      String s = "public " + mirrorClassName + "(";
-      for (int i = 0; i < constructor.getParameterTypes().length; i++) {
-        if (i != 0)
-          s += ", ";
-        CtClass parameter = constructor.getParameterTypes()[i];
-        String parameterName = toMirrorSafeName(ctClass, parameter);
-        s += parameterName + " $" + (i + 1);
-      }
-      s += ") {";
+    if (!Modifier.isInterface(modifiers)){
+      // always add default constructor unless we are mirroring an interface!
+      logger.debug("Adding default constructor for " + mirrorClassName);
+      result.append("public " + mirrorClassName + "() {");
 
       // find eligible super constructor
       for (CtConstructor superConstructor : ctClass.getSuperclass().getDeclaredConstructors()) {
         if (Modifier.isPublic(superConstructor.getModifiers())
             || Modifier.isProtected(superConstructor.getModifiers())
             || Modifier.isPackage(superConstructor.getModifiers())
-               && ctClass.getSuperclass().getPackageName().equals(ctClass.getPackageName())) {
-          s += "  super(";
-          for (int i = 0; i < superConstructor.getParameterTypes().length; i++) {
-            if (i != 0)
-              s += ", ";
-            s += "null";
-          }
-          s += ");";
+            && ctClass.getSuperclass().getPackageName().equals(ctClass.getPackageName())) {
+          result.append(toConstructorInvocationString(superConstructor));
           break;
         }
       }
+      result.append("}\n");
 
-      s += "}\n";
-      result.append(s);
+      for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
+        if (constructor.getParameterTypes().length == 0) {
+          continue; // do not add default constructor again
+        }
+        logger.debug("Adding constructor for " + mirrorClassName + " " + constructor.getModifiers() + " " + Modifier.toString(constructor.getModifiers()));
+
+        if ((constructor.getModifiers() & AccessFlag.SYNTHETIC) != 0 || constructor.getModifiers() == 0) { // wtf
+          logger.debug("Constructor is synthetic");
+          continue;
+        }
+
+        result.append("public " + mirrorClassName + "(" + toParameterString(constructor) + ") { "+mirrorClassName+"(); }\n");
+      }
     }
 
     // add nested classes
@@ -151,73 +127,80 @@ public class MirrorClassGenerator {
         Integer.parseInt(innerClassName); // anonymous inner class
       }
       catch (NumberFormatException e) {
-        String nestedClassSrc = generateBodySource(nestedClass);
-        result.append(nestedClassSrc);
+        result.append(toClassString(nestedClass));
       }
     }
 
 
-    // convert all class fields to public for access
+    // add fields, convert to protected non-final for access
     for (CtField field : ctClass.getDeclaredFields()) {
-      int modifiers = field.getModifiers();
-      if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
-        modifiers = Modifier.setProtected(modifiers);
-      }
-      modifiers = Modifier.clear(modifiers, Modifier.FINAL);
-
+      int fieldModifiers = stripFinalPublicPackage(field.getModifiers());
       String typeName = toMirrorSafeName(ctClass, field.getType());
 
-      result.append(Modifier.toString(modifiers) + " " + typeName + " " + field.getName() + " = " + getDefaultValue(field.getType()) + ";\n");
+      result.append(Modifier.toString(fieldModifiers) + " " + typeName + " " + field.getName() + " = " + getDefaultValue(field.getType()) + ";\n");
     }
 
-    // convert all methods to public non-final for access/override
+    // add methods, convert to protected non-final for access
     for (CtMethod method : ctClass.getDeclaredMethods()) {
       logger.debug("Adding method for " + mirrorClassName + " " + method.getModifiers() + " " + Modifier.toString(method.getModifiers()));
-      logger.debug("Checking for synthetic");
-      if ((method.getModifiers() & AccessFlag.SYNTHETIC) != 0 || method.getName().startsWith("access$")) { // wtf
-        logger.debug("is synthetic");
+      if (isSynthetic(method)) {
         continue;
       }
-      String methodSrc = addMethod(ctClass, mirrorClassName, method);
-      result.append(methodSrc);
+      result.append(toMethodString(ctClass, method));
     }
 
     result.append("}\n");
     return result.toString();
   }
-    
 
-  private String addMethod(final CtClass ctClass, final String mirrorClassName, final CtMethod method) throws NotFoundException, CannotCompileException {
-    StringBuilder result = new StringBuilder();
-    int modifiers = method.getModifiers();
+  private int stripFinalPublicPackage(int modifiers) {
     if (Modifier.isPrivate(modifiers) || Modifier.isPackage(modifiers)) {
       modifiers = Modifier.setProtected(modifiers);
     }
-    modifiers = Modifier.clear(modifiers, Modifier.FINAL);
+    return Modifier.clear(modifiers, Modifier.FINAL);
+  }
 
-    String returnType = toMirrorSafeName(ctClass, method.getReturnType());
-    result.append(Modifier.toString(modifiers) + " " + returnType + " " + method.getName() + "(");
-    for (int i = 0; i < method.getParameterTypes().length; i++) {
-      CtClass parameter = method.getParameterTypes()[i];
-      if (i != 0)
-        result.append(", ");
-      String parameterName = toMirrorSafeName(ctClass, parameter);
-      result.append(parameterName + " $" + (i + 1));
+  private boolean isSynthetic(CtMethod ctMethod) {
+    if ((ctMethod.getModifiers() & AccessFlag.SYNTHETIC) != 0 || ctMethod.getName().startsWith("access$")) { // wtf
+      logger.debug(ctMethod.toString() + "is synthetic");
+      return true;
+    } else {
+      return false;
     }
-    result.append(")");
-    
-    if (Modifier.isAbstract(modifiers)) {
-      result.append(";\n");
+  }
+
+  private String toMethodString(final CtClass ctClass, final CtMethod ctMethod) throws NotFoundException, CannotCompileException {
+    StringBuilder result = new StringBuilder();
+
+    int modifiers = stripFinalPublicPackage(ctMethod.getModifiers());
+
+    String returnType = toMirrorSafeName(ctClass, ctMethod.getReturnType());
+    result.append(Modifier.toString(modifiers) + " " + returnType + " " + ctMethod.getName() + "(");
+
+    result.append(toParameterString(ctMethod));
+    result.append(") {");
+
+    String defaultValue = getDefaultValue(ctMethod.getReturnType());
+    if (defaultValue != null) {
+      result.append(" return " + defaultValue + "; ");
     }
-    else {
-      result.append(" {");
-      String defaultValue = getDefaultValue(method.getReturnType());
-      if (defaultValue != null) {
-        result.append(" return " + defaultValue + "; ");
-      }
-      result.append("}\n");
-    }
+    result.append("}\n");
     return result.toString();
+  }
+
+  /**
+   * TODO: Should probably add class CtHelper for these kinds of methods?
+   *
+   * Generates a method parameter list string for the mirror class. Substitutes all references to classes that have mirrors to their mirror class names
+   */
+  private String toParameterString(CtBehavior ctBehavior) throws NotFoundException {
+    String result = "";
+    for (int i = 0; i < ctBehavior.getParameterTypes().length; i++) {
+      String parameterType = toMirrorSafeName(ctBehavior.getDeclaringClass(), ctBehavior.getParameterTypes()[i]);
+      String parameter = parameterType + " $" + (i+1);
+      result += (i == 0) ? parameter : ", " + parameter;
+    }
+    return result;
   }
     
   private String toMirrorSafeName(CtClass containingClass, CtClass type) throws NotFoundException {
