@@ -211,4 +211,20 @@ public class TestMethodPatching extends TestBase {
 
     Assert.assertEquals("dohtem dedda", clazz.transform().method("access", new Class[]{String.class}).invoke("added method"));
   }
+
+  @Test
+  public void testModifyThrownException() throws Exception {
+    final TransformableClassDefinition clazz = new TransformableClassDefinition(PublicExceptionMethod.class, "ExtensionModifyException");
+
+    assertThat(clazz)
+        .processedWith(new TypesafeBytecodeModificationProcessor())
+        .compilesWithoutError()
+        .and().generatesClasses().forAllOfWhich(new CompileTester.CompilationResultsConsumer() {
+      public void accept(Map<String, JavaFileObject> stringJavaFileObjectMap) {
+        clazz.appendToClassPath(stringJavaFileObjectMap);
+      }
+    });
+
+    Assert.assertEquals("modified exception", clazz.transform().construct().method("access", new Class[]{}).invoke());
+  }
 }

@@ -14,6 +14,7 @@ import javassist.bytecode.AccessFlag;
  *
  */
 public class MirrorClassGenerator {
+  private static final String EXTENSION = "_Mirror"; // TODO: Mirror classes could use different suffixes?
   private static final Logger logger = LoggerFactory.getLogger(MirrorClassGenerator.class);
   private final CtClass originalClass;
 
@@ -22,8 +23,7 @@ public class MirrorClassGenerator {
   }
   
   public String getName() {
-    // TODO: Mirror classes could use different suffixes?
-    return originalClass.getName() + "_Mirror";
+    return originalClass.getName() + EXTENSION;
   }
 
   public String generateSource() throws Exception {
@@ -41,7 +41,7 @@ public class MirrorClassGenerator {
   private String toClassString(CtClass ctClass) throws Exception {
     StringBuilder result = new StringBuilder();
     
-    String mirrorClassName = ctClass.getSimpleName() + "_Mirror";
+    String mirrorClassName = ctClass.getSimpleName() + EXTENSION;
     if (mirrorClassName.contains("$")) {
       mirrorClassName = mirrorClassName.substring(mirrorClassName.lastIndexOf('$') + 1);
     }
@@ -53,6 +53,7 @@ public class MirrorClassGenerator {
         modifiers = Modifier.setPublic(modifiers);
       }
       modifiers = Modifier.clear(modifiers, Modifier.FINAL);
+
       if (Modifier.isAbstract(modifiers)) {
         modifiers = Modifier.clear(modifiers, Modifier.ABSTRACT);
       }
@@ -63,19 +64,20 @@ public class MirrorClassGenerator {
         result.append(Modifier.toString(modifiers) + " class " + mirrorClassName);
       }
 
-      // add extends clause if required
+      // add extends clause
       CtClass superClass = ctClass.getSuperclass();
       if (superClass != null && !"java.lang.Object".equals(superClass.getName())) {
         String superClassName = superClass.getName().replace("$", ".");
-        result.append(" extends " + superClassName); // extends parentClassName
+        result.append(" extends " + superClassName);
       }
 
-      // add implements clause if required
+      // add implements clause
       CtClass[] interfaceClasses = ctClass.getInterfaces();
       if (interfaceClasses.length > 0) {
         result.append(" implements ");
-        for (CtClass interfaceClass : interfaceClasses) {
-          result.append(interfaceClass.getName().replace("$", "."));
+        for (int i = 0; i < interfaceClasses.length; i++) {
+          String interfaceName = interfaceClasses[i].getName().replace("$", ".");
+          result.append((i == 0) ? interfaceName : ", " + interfaceName);
         }
       }
       result.append(" {\n");
@@ -115,7 +117,11 @@ public class MirrorClassGenerator {
           continue;
         }
 
-        result.append("public " + mirrorClassName + "(" + toParameterString(constructor) + ") { "+mirrorClassName+"(); }\n");
+        result.append("public " + mirrorClassName + "(" + toParameterString(constructor) + ") ");
+        if (constructor.getExceptionTypes().length > 0) {
+          result.append("throws " + toExceptionString(constructor.getExceptionTypes()) + " ");
+        }
+        result.append("{ "+mirrorClassName+"(); }\n");
       }
     }
 
@@ -178,7 +184,11 @@ public class MirrorClassGenerator {
     result.append(Modifier.toString(modifiers) + " " + returnType + " " + ctMethod.getName() + "(");
 
     result.append(toParameterString(ctMethod));
-    result.append(") {");
+    result.append(")");
+    if (ctMethod.getExceptionTypes().length > 0) {
+      result.append(" throws " + toExceptionString(ctMethod.getExceptionTypes()));
+    }
+    result.append("{");
 
     String defaultValue = getDefaultValue(ctMethod.getReturnType());
     if (defaultValue != null) {
@@ -199,6 +209,15 @@ public class MirrorClassGenerator {
       String parameterType = toMirrorSafeName(ctBehavior.getDeclaringClass(), ctBehavior.getParameterTypes()[i]);
       String parameter = parameterType + " $" + (i+1);
       result += (i == 0) ? parameter : ", " + parameter;
+    }
+    return result;
+  }
+
+  private String toExceptionString(CtClass[] ctClasses) throws NotFoundException {
+    String result = "";
+    for (int i = 0; i < ctClasses.length; i++) {
+      String className = ctClasses[i].getName();
+      result += (i == 0) ? className : ", " + className;
     }
     return result;
   }
