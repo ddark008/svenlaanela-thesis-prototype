@@ -55,9 +55,8 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
     try {
       logger.info("");
       TypeMirror originalClassType = getPatchedClassType(extensionClass);
-      VersionRange versionRange = getVersionRange(extensionClass);
 
-      logger.info("@Patches(" + originalClassType.toString()+", min="+versionRange.min+", max="+versionRange.max+")");
+      logger.info("@Patches(" + originalClassType.toString()+")");
       logger.info("public class " + extensionClass);
 
       generateMirrorClass(extensionClass, originalClassType);
@@ -77,11 +76,6 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
     catch (MirroredTypeException e) {
       return e.getTypeMirror();
     }
-  }
-
-  private VersionRange getVersionRange(Element extensionClass) {
-    Patches annotation = extensionClass.getAnnotation(Patches.class);
-    return new VersionRange(annotation.min(), annotation.max());
   }
   
   private void generateMirrorClass(Element extensionClass, TypeMirror originalClass) {
