@@ -15,33 +15,18 @@ import javassist.bytecode.AccessFlag;
  */
 public class MirrorClassGenerator {
   private static final Logger logger = LoggerFactory.getLogger(MirrorClassGenerator.class);
-  private final String originalClassName;
-  private final ClassPool classPool;
-  
-  public MirrorClassGenerator(ClassPool classPool, String originalClassName) {
-    this.classPool = classPool;
-    this.originalClassName = originalClassName;
-  }
-  
-  public String getOriginalClassName() {
-    return originalClassName;
+  private final CtClass originalClass;
+
+  public MirrorClassGenerator(CtClass originalClass) {
+    this.originalClass = originalClass;
   }
   
   public String getName() {
     // TODO: Mirror classes could use different suffixes?
-    return originalClassName + "_Mirror";
-  }
-  
-  public String getSimpleName() {
-    return getName().substring(getName().lastIndexOf('.'));
+    return originalClass.getName() + "_Mirror";
   }
 
   public String generateSource() throws Exception {
-    return generateSource(originalClassName);
-  }
-  
-  private String generateSource(String originalClassName) throws Exception {
-    CtClass originalClass = classPool.get(originalClassName);
     return generateSource(originalClass);
   }
   
@@ -71,17 +56,21 @@ public class MirrorClassGenerator {
       if (Modifier.isAbstract(modifiers)) {
         modifiers = Modifier.clear(modifiers, Modifier.ABSTRACT);
       }
-      
-      if (!Modifier.isInterface(modifiers)) {
-        result.append(Modifier.toString(modifiers) + " class " + mirrorClassName); // public class className
-      } else {
+
+      if (Modifier.isInterface(modifiers)) {
         result.append(Modifier.toString(modifiers) + " " + mirrorClassName);
+      } else {
+        result.append(Modifier.toString(modifiers) + " class " + mirrorClassName);
       }
+
+      // add extends clause if required
       CtClass superClass = ctClass.getSuperclass();
       if (superClass != null && !"java.lang.Object".equals(superClass.getName())) {
         String superClassName = superClass.getName().replace("$", ".");
         result.append(" extends " + superClassName); // extends parentClassName
       }
+
+      // add implements clause if required
       CtClass[] interfaceClasses = ctClass.getInterfaces();
       if (interfaceClasses.length > 0) {
         result.append(" implements ");
@@ -89,49 +78,30 @@ public class MirrorClassGenerator {
           result.append(interfaceClass.getName().replace("$", "."));
         }
       }
-      
       result.append(" {\n");
+
 
       if (!Modifier.isInterface(modifiers)) {
         result.append("protected final void instrument(" + MethodCall.class.getName() + " call) {}\n");
         
         // always add default constructor unless we are mirroring an interface!
         logger.debug("Adding default constructor for " + mirrorClassName);
-        String s = "public " + mirrorClassName + "() {";
+        result.append("public " + mirrorClassName + "() {");
+
         // find eligible super constructor
         for (CtConstructor superConstructor : ctClass.getSuperclass().getDeclaredConstructors()) {
           if (Modifier.isPublic(superConstructor.getModifiers()) 
               || Modifier.isProtected(superConstructor.getModifiers()) 
               || Modifier.isPackage(superConstructor.getModifiers()) 
                  && ctClass.getSuperclass().getPackageName().equals(ctClass.getPackageName())) {
-            s += " super(";
-            for (int i = 0; i < superConstructor.getParameterTypes().length; i++) {
-              if (i != 0)
-                s += ", ";
-              s += "null";
-            }
-            s += "); ";
+            result.append(toConstructorInvocationString(superConstructor));
             break;
           }
         }
-        s += "}\n";
-        result.append(s);
+        result.append("}\n");
       }
     }
 
-    // add nested classes
-    for (CtClass nestedClass : ctClass.getDeclaredClasses()) {
-      String innerClassName = nestedClass.getName().substring(ctClass.getName().length() + 1);
-      logger.debug("Nested class: " + innerClassName);
-      try {
-        Integer.parseInt(innerClassName); // anonymous inner class
-      }
-      catch (NumberFormatException e) {
-        String nestedClassSrc = generateBodySource(nestedClass);
-        result.append(nestedClassSrc);
-      }
-    }
-    
     // add constructors, convert to public for access/override
     for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
       if (constructor.getParameterTypes().length == 0) {
@@ -154,9 +124,9 @@ public class MirrorClassGenerator {
 
       // find eligible super constructor
       for (CtConstructor superConstructor : ctClass.getSuperclass().getDeclaredConstructors()) {
-        if (Modifier.isPublic(superConstructor.getModifiers()) 
-            || Modifier.isProtected(superConstructor.getModifiers()) 
-            || Modifier.isPackage(superConstructor.getModifiers()) 
+        if (Modifier.isPublic(superConstructor.getModifiers())
+            || Modifier.isProtected(superConstructor.getModifiers())
+            || Modifier.isPackage(superConstructor.getModifiers())
                && ctClass.getSuperclass().getPackageName().equals(ctClass.getPackageName())) {
           s += "  super(";
           for (int i = 0; i < superConstructor.getParameterTypes().length; i++) {
@@ -172,6 +142,20 @@ public class MirrorClassGenerator {
       s += "}\n";
       result.append(s);
     }
+
+    // add nested classes
+    for (CtClass nestedClass : ctClass.getDeclaredClasses()) {
+      String innerClassName = nestedClass.getName().substring(ctClass.getName().length() + 1);
+      logger.debug("Nested class: " + innerClassName);
+      try {
+        Integer.parseInt(innerClassName); // anonymous inner class
+      }
+      catch (NumberFormatException e) {
+        String nestedClassSrc = generateBodySource(nestedClass);
+        result.append(nestedClassSrc);
+      }
+    }
+
 
     // convert all class fields to public for access
     for (CtField field : ctClass.getDeclaredFields()) {
@@ -243,6 +227,24 @@ public class MirrorClassGenerator {
     else {
       return type.getName();
     }
+  }
+
+  /**
+   * TODO: Should probably add class CtHelper for these kinds of methods?
+   *
+   * Generate an invocation string for a particular super constructor in the form of
+   * super(null, 0, 0.0, false, 'x');
+   *
+   * @return
+   */
+  private String toConstructorInvocationString(CtConstructor ctConstructor) throws NotFoundException {
+    String result = "super(";
+    for (int i = 0; i < ctConstructor.getParameterTypes().length; i++) {
+      String defaultValue = getDefaultValue(ctConstructor.getParameterTypes()[i]);
+      result += (i == 0) ? defaultValue : ", " + defaultValue;
+    }
+    result += ");";
+    return result;
   }
     
   private String getDefaultValue(CtClass clazz) {

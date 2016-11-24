@@ -27,6 +27,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.JavaFileObject;
 
 import javassist.ClassPool;
+import javassist.CtClass;
 
 @SupportedAnnotationTypes("org.zeroturnaround.javassist.annotation.Patches")
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
@@ -71,7 +72,7 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
     Patches annotation = extensionClass.getAnnotation(Patches.class);
     try {
       Class<?> value = annotation.value();
-      return null; // should throw exception instead of returning here;
+      throw new RuntimeException("Should not occur!");
     }
     catch (MirroredTypeException e) {
       return e.getTypeMirror();
@@ -79,16 +80,16 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
   }
   
   private void generateMirrorClass(Element extensionClass, TypeMirror originalClass) {
-    MirrorClassGenerator mirrorClass = new MirrorClassGenerator(classPool, originalClass.toString());
-    if (mirrorClassRegistry.contains(mirrorClass.getName())) {
-      logger.info("Existing mirror class: " + mirrorClassRegistry.getMirror(mirrorClass.getName()));
-      return;
-    } else {
-      logger.info("Generating mirror class: " + mirrorClass.getName());      
-    }
-    
     PrintWriter w = null;
-    try {      
+    try {
+      CtClass originalCtClass = classPool.getCtClass(originalClass.toString());
+      MirrorClassGenerator mirrorClass = new MirrorClassGenerator(originalCtClass);
+      if (mirrorClassRegistry.contains(mirrorClass.getName())) {
+        logger.info("Existing mirror class: " + mirrorClassRegistry.getMirror(mirrorClass.getName()));
+        return;
+      } else {
+        logger.info("Generating mirror class: " + mirrorClass.getName());
+      }
       JavaFileObject mirrorClassObject = processingEnv.getFiler().createSourceFile(mirrorClass.getName(), extensionClass);
       
       w = new PrintWriter(new BufferedWriter(mirrorClassObject.openWriter()));
@@ -96,7 +97,7 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
       w.flush();
       logger.info("Finished: " + mirrorClassObject.toUri());
     } catch (Exception e) {
-      logger.error("Failure generating mirror class: " + mirrorClass.getName(), e);
+      logger.error("Failure generating mirror class for: " + originalClass.toString(), e);
     } finally {
       IOUtil.closeQuietly(w);
     }
