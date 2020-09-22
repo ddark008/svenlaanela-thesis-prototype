@@ -1,5 +1,7 @@
 package org.zeroturnaround.javassist.annotation.processor;
 
+import javassist.ClassPath;
+import javassist.LoaderClassPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.javassist.annotation.Patches;
@@ -42,6 +44,12 @@ public class TypesafeBytecodeModificationProcessor extends AbstractProcessor {
     classPool = new ClassPool(true);
   }
   
+  public TypesafeBytecodeModificationProcessor() {
+    // Add classPath of compiling sources (it's dependencies)
+    ClassLoader cl = this.getClass().getClassLoader();
+    classPool.appendClassPath(new LoaderClassPath(cl));
+  }
+
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     for (Element element : roundEnv.getRootElements()) {

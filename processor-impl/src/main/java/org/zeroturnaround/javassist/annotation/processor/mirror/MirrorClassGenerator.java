@@ -121,7 +121,7 @@ public class MirrorClassGenerator {
         if (constructor.getExceptionTypes().length > 0) {
           result.append("throws " + toExceptionString(constructor.getExceptionTypes()) + " ");
         }
-        result.append("{ "+mirrorClassName+"(); }\n");
+        result.append("{ this(); new "+mirrorClassName+"(); }\n");
       }
     }
 
@@ -188,13 +188,18 @@ public class MirrorClassGenerator {
     if (ctMethod.getExceptionTypes().length > 0) {
       result.append(" throws " + toExceptionString(ctMethod.getExceptionTypes()));
     }
-    result.append("{");
-
-    String defaultValue = getDefaultValue(ctMethod.getReturnType());
-    if (defaultValue != null) {
-      result.append(" return " + defaultValue + "; ");
+    if (Modifier.isAbstract(modifiers)) {
+      // abstract can't have body
+      result.append(";");
     }
-    result.append("}\n");
+    else{
+      result.append("{");
+      String defaultValue = getDefaultValue(ctMethod.getReturnType());
+      if (defaultValue != null) {
+        result.append(" return " + defaultValue + "; ");
+      }
+      result.append("}\n");
+    }
     return result.toString();
   }
 
@@ -217,6 +222,8 @@ public class MirrorClassGenerator {
     String result = "";
     for (int i = 0; i < ctClasses.length; i++) {
       String className = ctClasses[i].getName();
+      // fix for nested classes names
+      className = className.replace('$','.');
       result += (i == 0) ? className : ", " + className;
     }
     return result;
