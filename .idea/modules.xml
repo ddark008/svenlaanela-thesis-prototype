@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/processor.iml" filepath="$PROJECT_DIR$/processor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/processor-api/processor-api.iml" filepath="$PROJECT_DIR$/processor-api/processor-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/processor-impl/processor-impl.iml" filepath="$PROJECT_DIR$/processor-impl/processor-impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/processor-loader/processor-loader.iml" filepath="$PROJECT_DIR$/processor-loader/processor-loader.iml" />
+      <module fileurl="file://$PROJECT_DIR$/processor-samples/processor-samples.iml" filepath="$PROJECT_DIR$/processor-samples/processor-samples.iml" />
+      <module fileurl="file://$PROJECT_DIR$/processor-samples/processor-samples-jrplugins/processor-samples-jrplugins.iml" filepath="$PROJECT_DIR$/processor-samples/processor-samples-jrplugins/processor-samples-jrplugins.iml" />
+      <module fileurl="file://$PROJECT_DIR$/processor-test/processor-test.iml" filepath="$PROJECT_DIR$/processor-test/processor-test.iml" />
+    </modules>
+  </component>
+</project>

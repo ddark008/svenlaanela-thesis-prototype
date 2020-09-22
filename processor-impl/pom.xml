@@ -37,7 +37,7 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.5.1</version>
+        <version>3.8.1</version>
         <configuration>
           <!-- Disable annotation processing for ourselves. -->
           <compilerArgument>-proc:none</compilerArgument>

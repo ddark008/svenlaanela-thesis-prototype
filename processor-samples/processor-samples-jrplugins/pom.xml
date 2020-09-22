@@ -6,6 +6,13 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
   <artifactId>processor-samples-jrplugins</artifactId>
+<repositories>
+    <repository>
+        <id>ZeroTurnaround</id>
+        <name>ZeroTurnaround</name>
+        <url>https://repos.zeroturnaround.com/nexus/content/repositories/zt-public-releases/</url>
+    </repository>
+</repositories>
   <dependencies>
   	<dependency>
   		<groupId>org.zeroturnaround</groupId>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath>
+          <entry name="$PROJECT_DIR$/processor-impl/target/processor-impl-1.0-SNAPSHOT.jar" />
+        </processorPath>
+        <module name="processor-samples-jrplugins" />
+        <module name="processor-loader" />
+        <module name="processor-api" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="processor" target="1.7" />
+      <module name="processor-api" target="1.7" />
+      <module name="processor-impl" target="1.7" />
+      <module name="processor-loader" target="1.7" />
+      <module name="processor-samples" target="1.7" />
+      <module name="processor-samples-jrplugins" target="1.7" />
+      <module name="processor-test" target="1.7" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="processor-impl" options="-proc:none" />
+      <module name="processor-samples-jrplugins" options="" />
+    </option>
+  </component>
+</project>
