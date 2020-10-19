@@ -11,7 +11,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="processor-api" />
     <orderEntry type="module" module-name="processor-impl" />
-    <orderEntry type="library" name="Maven: org.javassist:javassist:3.20.0-GA" level="project" />
+    <orderEntry type="library" name="Maven: org.javassist:javassist:3.18.2-GA" level="project" />
     <orderEntry type="module" module-name="processor-loader" />
     <orderEntry type="library" name="Maven: org.thymeleaf:thymeleaf:2.0.15" level="project" />
     <orderEntry type="library" name="Maven: ognl:ognl:3.0.5" level="project" />
