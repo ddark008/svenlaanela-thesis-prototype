@@ -6,6 +6,7 @@ public class OriginalClass {
 	public String cbpName;
 	public String cbpSimpleName;
 	public String name;
+	public String nameJVM;
 	public ExtensionClass extension = new ExtensionClass();
 	
 	/*
@@ -15,6 +16,6 @@ public class OriginalClass {
 	public String getCbpName() { return cbpName; }
 	public String getCbpSimpleName() { return cbpSimpleName; }
 	public String getName() { return name; }
-	
+	public String getNameJVM() { return nameJVM; }
 
 }

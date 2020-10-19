@@ -11,6 +11,6 @@ import org.zeroturnaround.javassist.annotation.Transformer;
 @Transformer("$original.name")
 public class $original.cbpSimpleName extends org.zeroturnaround.javassist.annotation.processor.wiring.BaseTransformer implements org.zeroturnaround.javassist.annotation.processor.wiring.JavassistClassBytecodeProcessor {
   public $original.cbpSimpleName () {
-    super("$original.name", "$extension.name");
+    super("$original.name", "$original.nameJVM", "$extension.name");
   }
 }

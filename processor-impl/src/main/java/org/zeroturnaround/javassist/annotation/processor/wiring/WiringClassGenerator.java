@@ -14,6 +14,7 @@ import org.zeroturnaround.javassist.annotation.processor.util.IOUtil;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.NotFoundException;
+import javassist.bytecode.Descriptor;
 
 /**
  * The wiring class holds the logic that binds together the original class and 
@@ -50,6 +51,7 @@ public class WiringClassGenerator {
       OriginalClass oc = new OriginalClass();
       oc.packageName = original.getPackageName();
       oc.name = original.getName();
+      oc.nameJVM = Descriptor.toJvmName(original);
       oc.cbpName = original.getName() + "CBP";
       oc.cbpSimpleName = original.getSimpleName() + "CBP";
       oc.extension.name = extensionClassName;

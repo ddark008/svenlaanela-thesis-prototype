@@ -1,5 +1,6 @@
 package org.zeroturnaround.javassist.annotation.processor.wiring;
 
+import javassist.bytecode.Descriptor;
 import org.zeroturnaround.javassist.annotation.Modify;
 
 import javassist.*;
@@ -14,10 +15,13 @@ public class BaseTransformer implements org.zeroturnaround.javassist.annotation.
   private static final String ORIGINAL_AWARE_CLASS = "org.zeroturnaround.javassist.annotation.OriginalAware";
 
   private final String originalClassName;
+  private final String originalClassNameJVM; // Original class name in internal representation of the class name in the JVM
   private final String extensionClassName;
 
-  public BaseTransformer(String originalClassName, String extensionClassName) {
+
+  public BaseTransformer(String originalClassName, String originalClassNameJVM, String extensionClassName) {
     this.originalClassName = originalClassName;
+    this.originalClassNameJVM = originalClassNameJVM;
     this.extensionClassName = extensionClassName;
   }
 
@@ -238,5 +242,9 @@ public class BaseTransformer implements org.zeroturnaround.javassist.annotation.
   private int syntheticMethodCounter = 9999;
   private String getUniqueSyntheticMethodName() {
     return "access$" + syntheticMethodCounter--;
+  }
+
+  public String getOriginalClassNameJVM() {
+    return originalClassNameJVM;
   }
 }
